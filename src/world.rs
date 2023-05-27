@@ -1,10 +1,10 @@
 //Color Declaration
-type Colour = [f32; 4];
-const RED: Colour = [1.0, 0.0, 0.0, 1.0];
-const GREEN: Colour = [0.0, 1.0, 0.0, 1.0];
-const BLUE: Colour = [0.0, 0.0, 1.0, 1.0];
-const WHITE: Colour = [1.0; 4];
-const BLACK: Colour = [0.0, 0.0, 0.0, 1.0];
+pub type Colour = [f32; 4];
+pub const RED: Colour = [1.0, 0.0, 0.0, 1.0];
+pub const GREEN: Colour = [0.0, 1.0, 0.0, 1.0];
+pub const BLUE: Colour = [0.0, 0.0, 1.0, 1.0];
+pub const WHITE: Colour = [1.0; 4];
+pub const BLACK: Colour = [0.0, 0.0, 0.0, 1.0];
 
 //Window Declaration
 pub const WINDOW_SIZE: i32 = 512;

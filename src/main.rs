@@ -1,18 +1,19 @@
+mod player;
 mod world;
 //Graphics Card
 extern crate graphics;
 extern crate opengl_graphics;
-use opengl_graphics::{GlGraphics, OpenGL};
+use graphics::{CharacterCache, Transformed};
+use opengl_graphics::{Filter, GlGraphics, GlyphCache, OpenGL, TextureSettings};
 
 //Piston Dependecie
 extern crate piston;
 use piston::event_loop::{EventSettings, Events};
 
 //Creating Window Dependecie with Piston
-use piston::{RenderEvent, Size, WindowSettings};
+use piston::{RenderEvent, Size, WindowSettings, ButtonState, Button, Key, ButtonEvent};
 extern crate glutin_window;
 use glutin_window::GlutinWindow;
-
 
 //Initialize
 fn main() {
@@ -36,13 +37,22 @@ fn main() {
     //Initialize Graphics Card
     let mut gl = GlGraphics::new(opengl);
 
+    //Initialize Map Construction
     let map = world::consctruct_map();
 
+    //Player Initialize
+    let mut player: player::Object = player::Object::new(0, 0, '@', world::RED);
+    let texture_settings = TextureSettings::new().filter(Filter::Nearest);
+    let ref mut glyphs = GlyphCache::new("assets/FiraSans-Regular.ttf", (), texture_settings)
+        .expect("Could not load font");
+
     //Event Loop Every Frame
-    while let Some(e) = events.next(&mut window) {
+    while let Some(event) = events.next(&mut window) {
         //Render Graphics
-        if let Some(render_args) = e.render_args() {
+        if let Some(render_args) = event.render_args() {
+            //C = Context, G = opengl graphics
             gl.draw(render_args.viewport(), |c, g| {
+                //World Renderization
                 for i in 0..world::WORLD_SIZE {
                     for j in 0..world::WORLD_SIZE {
                         let pos: [f64; 4] = [
@@ -59,10 +69,29 @@ fn main() {
                         );
                     }
                 }
+                //Player Renderization
+                let character = glyphs
+                    .character(world::PIXEL_SIZE as u32, player.character)
+                    .unwrap();
+                graphics::Image::new_color(player.colour).draw(
+                    character.texture,
+                    &c.draw_state,
+                    c.transform.trans(player.x as f64, player.y as f64),
+                    g,
+                );
             });
+            //Keyboard Controls
+            if let Some(k) = event.button_args() {
+                if k.state == ButtonState::Press {
+                    match k.button {
+                        Button::Keyboard(Key::W) => player.y -= 32,
+                        Button::Keyboard(Key::S) => player.y += 32,
+                        Button::Keyboard(Key::A) => player.x -= 32,
+                        Button::Keyboard(Key::D) => player.x += 32,
+                        _ => (),
+                    }
+                }
+            }
         }
-
-        //Simple Function
-        println!("Rendering");
     }
 }
