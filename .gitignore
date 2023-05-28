@@ -1,1 +1,8 @@
+/.vscode
 /target
+/data
+/editor
+/executor
+/executor-wasm
+.gitignore
+fyrox.log

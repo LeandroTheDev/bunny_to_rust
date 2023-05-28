@@ -1,0 +1,8 @@
+
+[package]
+name = "rust_project"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+fyrox = "0.29"
