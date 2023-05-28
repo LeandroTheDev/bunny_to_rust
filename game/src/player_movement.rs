@@ -1,17 +1,16 @@
 use fyrox::{
     core::{
-        algebra::{Matrix3, UnitQuaternion, Vector3},
+        algebra::{UnitQuaternion, Vector3},
         reflect::{FieldInfo, Reflect},
         uuid::{uuid, Uuid},
         visitor::prelude::*,
     },
-    engine::resource_manager::ResourceManager,
     event::{ElementState, Event, VirtualKeyCode, WindowEvent},
     impl_component_provider,
     scene::node::TypeUuidProvider,
-    script::{ScriptContext, ScriptDeinitContext, ScriptTrait},
+    script::{ScriptContext, ScriptTrait},
 };
-
+//Use camera_movement script to change horizontal rotation
 use crate::camera_movement;
 
 //Player Movement Script
@@ -24,7 +23,7 @@ pub struct PlayerMovement {
 }
 impl PlayerMovement {
     //Keyboard Detect Function
-    pub fn process_input_event(&mut self, event: &Event<()>, context: &ScriptContext) {
+    pub fn process_input_event(&mut self, event: &Event<()>) {
         match event {
             Event::WindowEvent { event, .. } => {
                 if let WindowEvent::KeyboardInput { input, .. } = event {
@@ -69,79 +68,49 @@ impl TypeUuidProvider for PlayerMovement {
 
 //Loops
 impl ScriptTrait for PlayerMovement {
-    fn on_init(&mut self, context: &mut ScriptContext) {
-        // Put initialization logic here.
-    }
-
-    fn on_start(&mut self, context: &mut ScriptContext) {
-        // There should be a logic that depends on other scripts in scene.
-        // It is called right after **all** scripts were initialized.
-    }
-
-    fn on_deinit(&mut self, context: &mut ScriptDeinitContext) {
-        // Put de-initialization logic here.
-    }
-
-    fn on_os_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
+    //Event Checker
+    fn on_os_event(&mut self, event: &Event<()>, _context: &mut ScriptContext) {
         //Keyboard Observer
-        unsafe { PLAYER_MOVEMENT.process_input_event(event, context) };
+        unsafe { PLAYER_MOVEMENT.process_input_event(event) };
     }
 
+    //Frame Update
     fn on_update(&mut self, context: &mut ScriptContext) {
-        //Movement Player
-        unsafe {
-            let position_x = context.scene.graph[context.handle].global_position()[0];
-            let position_y = context.scene.graph[context.handle].global_position()[1];
-            let position_z = context.scene.graph[context.handle].global_position()[2];
-            if PLAYER_MOVEMENT.position_x
-                || PLAYER_MOVEMENT.position_x_negative
-                || PLAYER_MOVEMENT.position_z
-                || PLAYER_MOVEMENT.position_z_negative
-            {
-                //left
-                if PLAYER_MOVEMENT.position_x {
-                    context.scene.graph[context.handle]
-                        .local_transform_mut()
-                        .set_position(Vector3::new(position_x + 0.03, position_y, position_z));
-                }
-                //right
-                if PLAYER_MOVEMENT.position_x_negative {
-                    context.scene.graph[context.handle]
-                        .local_transform_mut()
-                        .set_position(Vector3::new(position_x - 0.03, position_y, position_z));
-                }
-                //forward
-                if PLAYER_MOVEMENT.position_z {
-                    context.scene.graph[context.handle]
-                        .local_transform_mut()
-                        .set_position(Vector3::new(position_x, position_y, position_z + 0.03));
-                }
-                //backward
-                if PLAYER_MOVEMENT.position_z_negative {
-                    context.scene.graph[context.handle]
-                        .local_transform_mut()
-                        .set_position(Vector3::new(position_x, position_y, position_z - 0.03));
-                }
-            }
-        }
+        //Movement Player Update
+        if true {
+            // Borrow rigid body node.
+            let body = context.scene.graph[context.handle].as_rigid_body_mut();
+            // Keep only vertical velocity, and drop horizontal.
+            let mut velocity = Vector3::new(0.0, body.lin_vel().y, 0.0);
 
-        //Horizontal Mouse View
+            // Change the velocity depending on the keys pressed.
+            if unsafe { PLAYER_MOVEMENT.position_z } {
+                // If we moving forward then add "look" vector of the body.
+                velocity += body.look_vector();
+            }
+            if unsafe { PLAYER_MOVEMENT.position_z_negative } {
+                // If we moving backward then subtract "look" vector of the body.
+                velocity -= body.look_vector();
+            }
+            if unsafe { PLAYER_MOVEMENT.position_x } {
+                // If we moving left then add "side" vector of the body.
+                velocity += body.side_vector();
+            }
+            if unsafe { PLAYER_MOVEMENT.position_x_negative } {
+                // If we moving right then subtract "side" vector of the body.
+                velocity -= body.side_vector();
+            }
+
+            // Finally new linear velocity.
+            body.set_lin_vel(velocity);
+        }
+        //Horizontal Mouse View Update
         context.scene.graph[context.handle]
             .local_transform_mut()
             .set_rotation(UnitQuaternion::from_axis_angle(
                 &Vector3::y_axis(),
-                unsafe { camera_movement::player_camera.yaw.to_radians() },
+                unsafe { camera_movement::PLAYER_CAMERA.yaw.to_radians() },
             ));
-        //Rotation fix
-        // context.scene.graph[context.handle]
-        //     .local_transform_mut()
-        //     .set_rotation(UnitQuaternion::from_matrix(&Matrix3::new(
-        //         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        //     )));
-    }
-
-    fn restore_resources(&mut self, resource_manager: ResourceManager) {
-        // Restore resource handles here.
     }
 
     fn id(&self) -> Uuid {
