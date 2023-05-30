@@ -1,6 +1,3 @@
 /.vscode
 /target
-/editor
-/executor-wasm
-.gitignore
 fyrox.log
