@@ -1,6 +1,6 @@
 use fyrox::{
     core::{
-        algebra::{ArrayStorage, Const, Matrix, UnitQuaternion, Vector3},
+        algebra::{ArrayStorage, ComplexField, Const, Matrix, UnitQuaternion, Vector3},
         reflect::{FieldInfo, Reflect},
         uuid::{uuid, Uuid},
         visitor::prelude::*,
@@ -63,16 +63,37 @@ impl PlayerMovement {
     pub fn velocity(
         velocity: Matrix<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>>,
         is_on_air: bool,
-        is_pressing_ad: bool,
         is_pressing_s: bool,
+        acceleration_mouse: f32,
     ) -> Matrix<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>> {
         let mut base_velocity = velocity;
         for i in 0..3 {
             //If is in the air pressing A D
-            if i != 1 && !is_on_air && is_pressing_ad && !is_pressing_s {
+            if i != 1 && !is_on_air && acceleration_mouse != 0. && !is_pressing_s {
                 unsafe {
+                    let acceleration: f32;
+                    //Determines the maximum speed earned
+                    if PLAYER_ACCELERATION <= 5. {
+                        if acceleration_mouse >= 0.02 {
+                            acceleration = 0.02;
+                        } else {
+                            acceleration = acceleration_mouse;
+                        }
+                    } else if PLAYER_ACCELERATION <= 5. {
+                        if acceleration_mouse >= 0.02 {
+                            acceleration = 0.02;
+                        } else {
+                            acceleration = acceleration_mouse;
+                        }
+                    } else {
+                        if acceleration_mouse >= 0.005 {
+                            acceleration = 0.005;
+                        } else {
+                            acceleration = acceleration_mouse;
+                        }
+                    }
                     PLAYER_TICKS = 0;
-                    PLAYER_ACCELERATION += 0.01;
+                    PLAYER_ACCELERATION += acceleration;
                     base_velocity[i] *= PLAYER_ACCELERATION;
                 }
             //If is in the air without pressing A D
@@ -90,10 +111,11 @@ impl PlayerMovement {
                         if is_pressing_s {
                             PLAYER_ACCELERATION /= 2.;
                         } else {
-                            PLAYER_ACCELERATION /= 1.01;
+                            PLAYER_ACCELERATION /= 1.03;
                         }
                         if PLAYER_ACCELERATION <= 1. {
                             PLAYER_ACCELERATION = 1.;
+                            PLAYER_STRAFFING = false;
                         }
                     }
                     base_velocity[i] *= PLAYER_ACCELERATION;
@@ -132,6 +154,8 @@ static mut PLAYER_MOVEMENT: PlayerMovement = PlayerMovement {
 };
 static mut PLAYER_TICKS: i32 = 0;
 static mut PLAYER_ACCELERATION: f32 = 1.0;
+static mut PLAYER_STRAFFING: bool = false;
+static mut PLAYER_OLD_MOUSE_POSITION: f32 = 0.0;
 //Declaration
 impl_component_provider!(PlayerMovement);
 
@@ -167,10 +191,12 @@ impl ScriptTrait for PlayerMovement {
             let mut velocity = Vector3::new(0.0, body.lin_vel().y, 0.0);
             let mut accelerate = false;
             let mut dessacelerate: bool = false;
+            let mut mouse_accelerate: f32 = 0.;
 
             // Change the velocity depending on the keys pressed.
-            if unsafe { PLAYER_MOVEMENT.position_z } {
+            if unsafe { PLAYER_MOVEMENT.position_z || PLAYER_STRAFFING } {
                 // If we moving forward then add "look" vector of the body.
+                unsafe { PLAYER_STRAFFING = true };
                 velocity += body.look_vector() * 2.;
             }
             if unsafe { PLAYER_MOVEMENT.position_z_negative } {
@@ -192,12 +218,36 @@ impl ScriptTrait for PlayerMovement {
                 // If we moving up add "up" vector of the body
                 velocity += body.up_vector() * 1.5;
             }
+            if unsafe {
+                PLAYER_OLD_MOUSE_POSITION != camera_movement::PLAYER_CAMERA.yaw.to_radians()
+            } {
+                unsafe {
+                    //Calculates the mouse velocity
+                    let mut _player_mouse_position: f32 = 0.;
+                    //Negative to Positive
+                    if camera_movement::PLAYER_CAMERA.yaw.to_radians() < 0. {
+                        _player_mouse_position =
+                            camera_movement::PLAYER_CAMERA.yaw.to_radians().abs();
+                    } else {
+                        _player_mouse_position = camera_movement::PLAYER_CAMERA.yaw.to_radians();
+                    }
+                    //Difference between
+                    if _player_mouse_position != PLAYER_OLD_MOUSE_POSITION {
+                        if _player_mouse_position < PLAYER_OLD_MOUSE_POSITION {
+                            mouse_accelerate = PLAYER_OLD_MOUSE_POSITION - _player_mouse_position;
+                        } else {
+                            mouse_accelerate = _player_mouse_position - PLAYER_OLD_MOUSE_POSITION;
+                        }
+                    }
+                    PLAYER_OLD_MOUSE_POSITION = _player_mouse_position
+                }
+            }
             // Finally new linear velocity.
             body.set_lin_vel(PlayerMovement::velocity(
                 velocity,
                 unsafe { player_collider::IS_ON_AIR },
-                accelerate,
                 dessacelerate,
+                mouse_accelerate,
             ));
         }
         //Horizontal Mouse View Update
