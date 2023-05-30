@@ -7,3 +7,8 @@ How to test the project?
 - Download Rust
 - Open terminal
 - cargo run --bin executer
+
+How to creat a script?
+- Open terminal
+- cd to project
+- fyrox-template script --name MyScript

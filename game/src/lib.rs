@@ -1,8 +1,7 @@
 //! Scripts
-pub mod camera_movement;
-pub mod player_movement;
-use camera_movement::CameraMovement;
-use player_movement::PlayerMovement;
+pub mod player_scripts;
+use player_scripts::{camera_movement::CameraMovement, player_collider::PlayerCollider};
+use player_scripts::player_movement::PlayerMovement;
 //Game project.
 use fyrox::{
     core::pool::Handle,
@@ -27,6 +26,10 @@ impl PluginConstructor for GameConstructor {
             .serialization_context
             .script_constructors
             .add::<CameraMovement>("Camera Movement");
+        _context
+            .serialization_context
+            .script_constructors
+            .add::<PlayerCollider>("Player Collider");
     }
 
     //Game declaration
