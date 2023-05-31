@@ -10,6 +10,8 @@ use fyrox::{
     scene::node::TypeUuidProvider,
     script::{ScriptContext, ScriptTrait},
 };
+
+use super::mouse_sensitivy;
 //Camera Movement Script
 #[derive(Visit, Reflect, Default, Debug, Clone)]
 pub struct CameraMovement {
@@ -32,7 +34,7 @@ impl CameraMovement {
 }
 pub static mut PLAYER_CAMERA: CameraMovement = CameraMovement {
     pitch: 0.0,
-    yaw: 0.0,
+    yaw: 180.0 * 3.,
 };
 //Declaration
 impl_component_provider!(CameraMovement);
@@ -57,8 +59,13 @@ impl ScriptTrait for CameraMovement {
             .local_transform_mut()
             .set_rotation(UnitQuaternion::from_axis_angle(
                 &Vector3::x_axis(),
-                unsafe { PLAYER_CAMERA.pitch.to_radians() /2. },
+                unsafe { PLAYER_CAMERA.pitch.to_radians() / mouse_sensitivy },
             ));
+            // context.scene.graph[context.handle]
+            // .local_transform_mut()
+            // .set_rotation(UnitQuaternion::from_matrix(&Matrix3::new(
+            //     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            // )));
     }
 
     fn id(&self) -> Uuid {

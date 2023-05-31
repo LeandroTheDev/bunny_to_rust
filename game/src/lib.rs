@@ -1,7 +1,9 @@
 //! Scripts
 pub mod player_scripts;
-use player_scripts::{camera_movement::CameraMovement, player_collider::PlayerCollider};
 use player_scripts::player_movement::PlayerMovement;
+use player_scripts::{
+    camera_movement::CameraMovement, foot_collider::FootCollider, frontal_collider::FrontalCollider,
+};
 //Game project.
 use fyrox::{
     core::pool::Handle,
@@ -18,18 +20,25 @@ pub struct GameConstructor;
 impl PluginConstructor for GameConstructor {
     //Scripts Register
     fn register(&self, _context: PluginRegistrationContext) {
-        _context
-            .serialization_context
-            .script_constructors
-            .add::<PlayerMovement>("Player Movement");
-        _context
-            .serialization_context
-            .script_constructors
-            .add::<CameraMovement>("Camera Movement");
-        _context
-            .serialization_context
-            .script_constructors
-            .add::<PlayerCollider>("Player Collider");
+        //Player Scripts
+        if true {
+            _context
+                .serialization_context
+                .script_constructors
+                .add::<PlayerMovement>("Player Movement");
+            _context
+                .serialization_context
+                .script_constructors
+                .add::<CameraMovement>("Camera Movement");
+            _context
+                .serialization_context
+                .script_constructors
+                .add::<FootCollider>("Foot Collider");
+            _context
+                .serialization_context
+                .script_constructors
+                .add::<FrontalCollider>("Frontal Collider");
+        }
     }
 
     //Game declaration

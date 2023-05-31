@@ -62,12 +62,12 @@
         camera_settings: {
             "data/scenes/level1.rgs": (
                 position: [
-                    -5.019393,
-                    5.2460265,
-                    -1.6415597,
+                    0.5041477,
+                    3.9807384,
+                    11.607856,
                 ],
-                yaw: 1.1499995,
-                pitch: 0.52999973,
+                yaw: -9.370105,
+                pitch: 0.2599999,
             ),
             ".\\data\\scenes\\level1.rgs": (
                 position: [

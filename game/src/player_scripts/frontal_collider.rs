@@ -17,10 +17,11 @@ use fyrox::{
 };
 
 #[derive(Visit, Reflect, Default, Debug, Clone)]
-pub struct PlayerCollider {
+pub struct FrontalCollider {
     // Add fields here.
 }
-impl PlayerCollider {
+
+impl FrontalCollider {
     pub fn has_ground_contact(handle: Handle<Node>, graph: &Graph) -> bool {
         if let Some(collider) = graph.try_get(handle).and_then(|n| n.cast::<Collider>()) {
             for contact in collider.contacts(&graph.physics) {
@@ -34,16 +35,16 @@ impl PlayerCollider {
         false
     }
 }
-pub static mut IS_ON_AIR: bool = false;
-impl_component_provider!(PlayerCollider);
+pub static mut IS_FRONTAL_COLLIDE: bool = false;
+impl_component_provider!(FrontalCollider);
 
-impl TypeUuidProvider for PlayerCollider {
+impl TypeUuidProvider for FrontalCollider {
     fn type_uuid() -> Uuid {
-        uuid!("1a296833-770e-411f-9205-cc5d29f2d8af")
+        uuid!("e354a7a8-99df-411c-8efc-6c97566517e0")
     }
 }
 
-impl ScriptTrait for PlayerCollider {
+impl ScriptTrait for FrontalCollider {
     fn on_init(&mut self, _context: &mut ScriptContext) {
         // Put initialization logic here.
     }
@@ -57,15 +58,15 @@ impl ScriptTrait for PlayerCollider {
         // Put de-initialization logic here.
     }
 
-    fn on_os_event(&mut self, _event: &Event<()>, context: &mut ScriptContext) {
+    fn on_os_event(&mut self, _event: &Event<()>, _context: &mut ScriptContext) {
         // Respond to OS events here.
     }
 
     fn on_update(&mut self, context: &mut ScriptContext) {
         // Put object logic here.
-        //Check if is not in air
         unsafe {
-            IS_ON_AIR = PlayerCollider::has_ground_contact(context.handle, &context.scene.graph)
+            IS_FRONTAL_COLLIDE =
+                FrontalCollider::has_ground_contact(context.handle, &context.scene.graph)
         };
     }
 

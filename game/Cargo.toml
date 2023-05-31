@@ -6,4 +6,6 @@ edition = "2021"
 
 [dependencies]
 fyrox = "0.29"
-tokio = { version = "1.28.2", features = ["full"] } 
+
+[lib]
+crate-type = ["cdylib", "rlib"]
