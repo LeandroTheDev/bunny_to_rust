@@ -1,11 +1,8 @@
 
 [package]
-name = "rust_project"
+name = "bunny_to_rust"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-fyrox = "0.29"
-
-[lib]
-crate-type = ["cdylib", "rlib"]
+fyrox = {workspace = true}

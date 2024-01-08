@@ -1,118 +1,98 @@
-//! Scripts
-pub mod player_scripts;
-use player_scripts::player_movement::PlayerMovement;
-use player_scripts::{
-    camera_movement::CameraMovement, foot_collider::FootCollider, frontal_collider::FrontalCollider,
+//Bunny to Rust Dependencies
+pub mod bn_engine;
+pub mod bn_scripts;
+
+use bn_scripts::player_scripts::{
+    camera_moviment::CameraMoviment, foot_collider::FootCollider,
+    frontal_collider::FrontalCollider, player_hand::PlayerHand, player_moviment::PlayerMoviment,
 };
-//Game project.
+//Dependencies
 use fyrox::{
     core::pool::Handle,
     event::Event,
-    event_loop::ControlFlow,
     gui::message::UiMessage,
     plugin::{Plugin, PluginConstructor, PluginContext, PluginRegistrationContext},
-    scene::{loader::AsyncSceneLoader, Scene},
-    utils::log::Log,
+    scene::Scene,
 };
+use std::path::Path;
 
+//GameControler Instance
 pub struct GameConstructor;
 
 impl PluginConstructor for GameConstructor {
-    //Scripts Register
-    fn register(&self, _context: PluginRegistrationContext) {
-        //Player Scripts
-        if true {
-            _context
-                .serialization_context
-                .script_constructors
-                .add::<PlayerMovement>("Player Movement");
-            _context
-                .serialization_context
-                .script_constructors
-                .add::<CameraMovement>("Camera Movement");
-            _context
-                .serialization_context
-                .script_constructors
-                .add::<FootCollider>("Foot Collider");
-            _context
-                .serialization_context
-                .script_constructors
-                .add::<FrontalCollider>("Frontal Collider");
-        }
+    fn register(&self, context: PluginRegistrationContext) {
+        context
+            .serialization_context
+            .script_constructors
+            .add::<PlayerMoviment>("Player Moviment");
+        context
+            .serialization_context
+            .script_constructors
+            .add::<CameraMoviment>("Camera Moviment");
+        context
+            .serialization_context
+            .script_constructors
+            .add::<PlayerHand>("Player Hand");
+        context
+            .serialization_context
+            .script_constructors
+            .add::<FootCollider>("Foot Collider");
+        context
+            .serialization_context
+            .script_constructors
+            .add::<FrontalCollider>("Frontal Collider");
     }
 
-    //Game declaration
-    fn create_instance(
-        &self,
-        override_scene: Handle<Scene>,
-        context: PluginContext,
-    ) -> Box<dyn Plugin> {
-        Box::new(Game::new(override_scene, context))
+    fn create_instance(&self, scene_path: Option<&str>, context: PluginContext) -> Box<dyn Plugin> {
+        Box::new(Game::new(scene_path, context))
     }
 }
 
 pub struct Game {
     scene: Handle<Scene>,
-    loader: Option<AsyncSceneLoader>,
 }
 
 impl Game {
-    //Loading Scene
-    pub fn new(override_scene: Handle<Scene>, context: PluginContext) -> Self {
-        let mut loader = None;
-        let scene = if override_scene.is_some() {
-            override_scene
-        } else {
-            loader = Some(AsyncSceneLoader::begin_loading(
-                "data/scenes/level1.rgs".into(),
-                context.serialization_context.clone(),
-                context.resource_manager.clone(),
-            ));
-            Default::default()
-        };
-
-        Self { scene, loader }
+    pub fn new(scene_path: Option<&str>, context: PluginContext) -> Self {
+        context
+            .async_scene_loader
+            .request(scene_path.unwrap_or("data/scenes/scenario.rgs"));
+        Self {
+            scene: Handle::NONE,
+        }
     }
 }
 
 impl Plugin for Game {
-    //After load
     fn on_deinit(&mut self, _context: PluginContext) {
         // Do a cleanup here.
     }
 
-    //Loop
-    fn update(&mut self, context: &mut PluginContext, _control_flow: &mut ControlFlow) {
-        if let Some(loader) = self.loader.as_ref() {
-            if let Some(result) = loader.fetch_result() {
-                match result {
-                    Ok(scene) => {
-                        self.scene = context.scenes.add(scene);
-                    }
-                    Err(err) => Log::err(err),
-                }
-            }
-        }
+    fn update(&mut self, _context: &mut PluginContext) {
         // Add your global update code here.
     }
 
-    //Dont know
-    fn on_os_event(
-        &mut self,
-        _event: &Event<()>,
-        _context: PluginContext,
-        _control_flow: &mut ControlFlow,
-    ) {
+    fn on_os_event(&mut self, _event: &Event<()>, _context: PluginContext) {
         // Do something on OS event here.
     }
 
-    //Dont know
-    fn on_ui_message(
-        &mut self,
-        _context: &mut PluginContext,
-        _message: &UiMessage,
-        _control_flow: &mut ControlFlow,
-    ) {
+    fn on_ui_message(&mut self, _context: &mut PluginContext, _message: &UiMessage) {
         // Handle UI events here.
+    }
+
+    fn on_scene_begin_loading(&mut self, _path: &Path, context: &mut PluginContext) {
+        if self.scene.is_some() {
+            context.scenes.remove(self.scene);
+        }
+    }
+
+    fn on_scene_loaded(
+        &mut self,
+        _path: &Path,
+        scene: Handle<Scene>,
+        _data: &[u8],
+        _context: &mut PluginContext,
+    ) {
+        self.scene = scene;
     }
 }

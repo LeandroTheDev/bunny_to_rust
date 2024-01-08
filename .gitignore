@@ -1,4 +1,6 @@
-/.vscode
+.vscode
+executor
+executor-android
+executor-wasm
 /target
-/release
-fyrox.log
+*.log

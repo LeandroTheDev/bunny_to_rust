@@ -1,24 +1,21 @@
 use fyrox::{
     core::{
-        algebra::{UnitQuaternion, Vector3},
-        reflect::{FieldInfo, Reflect},
+        reflect::prelude::*,
         uuid::{uuid, Uuid},
         visitor::prelude::*,
+        TypeUuidProvider, algebra::{UnitQuaternion, Vector3},
     },
-    event::{DeviceEvent, Event},
+    event::{Event, DeviceEvent},
     impl_component_provider,
-    scene::node::TypeUuidProvider,
     script::{ScriptContext, ScriptTrait},
 };
 
-use super::mouse_sensitivy;
-//Camera Movement Script
 #[derive(Visit, Reflect, Default, Debug, Clone)]
-pub struct CameraMovement {
+pub struct CameraMoviment {
     pub pitch: f32,
     pub yaw: f32,
 }
-impl CameraMovement {
+impl CameraMoviment {
     //Mouse Detect Function
     pub fn process_input_event(&mut self, event: &Event<()>) {
         match event {
@@ -31,41 +28,43 @@ impl CameraMovement {
             _ => (),
         }
     }
+    pub fn get_pitch(&mut self) -> f32 {
+        return self.pitch;
+    }
+    pub fn get_yaw(&mut self) -> f32 {
+        return self.yaw;
+    }
 }
-pub static mut PLAYER_CAMERA: CameraMovement = CameraMovement {
-    pitch: 0.0,
-    yaw: 180.0 * 3.,
-};
-//Declaration
-impl_component_provider!(CameraMovement);
 
-//ID
-impl TypeUuidProvider for CameraMovement {
+impl_component_provider!(CameraMoviment);
+
+impl TypeUuidProvider for CameraMoviment {
     fn type_uuid() -> Uuid {
         uuid!("9a9be198-92d4-4693-bd4a-0070d73b95ac")
     }
 }
 
-//Loops
-impl ScriptTrait for CameraMovement {
-    //Event Checker
-    fn on_os_event(&mut self, event: &Event<()>, _context: &mut ScriptContext) {
-        unsafe { PLAYER_CAMERA.process_input_event(event) };
+impl ScriptTrait for CameraMoviment {
+    fn on_init(&mut self, context: &mut ScriptContext) {
+        // Declaring variables
+        self.pitch = 0.0;
+        self.yaw = 0.0;
     }
-    //Frame Update
+
+    fn on_os_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
+        // Enable mouse detection
+        self.process_input_event(event);
+    }
+
     fn on_update(&mut self, context: &mut ScriptContext) {
         //Mouse Vertical View
         context.scene.graph[context.handle]
             .local_transform_mut()
             .set_rotation(UnitQuaternion::from_axis_angle(
                 &Vector3::x_axis(),
-                unsafe { PLAYER_CAMERA.pitch.to_radians() / mouse_sensitivy },
+                //The 3 is mouse sensitivy
+                self.pitch.to_radians() / 3.,
             ));
-            // context.scene.graph[context.handle]
-            // .local_transform_mut()
-            // .set_rotation(UnitQuaternion::from_matrix(&Matrix3::new(
-            //     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            // )));
     }
 
     fn id(&self) -> Uuid {

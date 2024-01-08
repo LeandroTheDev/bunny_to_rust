@@ -8,5 +8,5 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-fyrox = "0.29"
-rust_project = { path = "../game" }
+fyrox = {workspace = true}
+bunny_to_rust = { path = "../game" }

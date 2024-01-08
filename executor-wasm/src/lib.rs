@@ -1,6 +1,6 @@
 //! Executor with your game connected to it as a plugin.
 use fyrox::engine::executor::Executor;
-use rust_project::GameConstructor;
+use bunny_to_rust::GameConstructor;
 use fyrox::core::wasm_bindgen::{self, prelude::*};
 
 #[wasm_bindgen]
