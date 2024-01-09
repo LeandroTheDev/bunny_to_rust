@@ -1,7 +1,20 @@
-# Rust Project
-Rust project is a experimental project, creating a 3D game using only rust language and fyrox engine.
+# Bunny to Rust
+Bunny to Rust is a experimental project, creating a 3D game using only rust language and fyrox engine.
 
-Bunnyhop game, that you needs to jump to gain acceleration and win the level.
+Bunnyhop game, that you needs to jump to gain acceleration.
+
+You can ``download`` the latest stable version from the [releases](https://github.com/LeandroTheDev/rust_project/releases) section
+
+``Actually Features``
+- Automatic Jump by holding space
+- Acceleration
+- A simple scene to test
+
+``Future Features``
+- Guns/Enemies
+- Wall slide
+- Third Person
+- Multiplayer / In long future maybe...
 
 # FAQ
 
@@ -18,12 +31,12 @@ How to play?
 - The rotated floor gives you a big boost in jump height but be careful, if you stand to much in you will lost acceleration.
 - If you frontal collide with something you will lose the acceleration.
 
-How to test the project?
+How to compile the project?
 - Download Rust
 - Open terminal
 - cargo install fyrox-template
 - fyrox-template init --name bunny_to_rust --style 3d
-- place all files to this new folder
+- place all files to this new folder and overwrite if needed
 - cargo run --package executor --release
 > This will compile the project, will take a long time..., if you just testing just download the lastest [release](https://github.com/LeandroTheDev/rust_project/releases)
 

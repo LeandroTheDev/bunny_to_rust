@@ -1,6 +1,7 @@
 use fyrox::{
     core::{
         algebra::{ArrayStorage, Const, Matrix, UnitQuaternion, Vector3},
+        log::Log,
         pool::Handle,
         reflect::prelude::*,
         uuid::{uuid, Uuid},
@@ -197,6 +198,7 @@ impl ScriptTrait for PlayerMoviment {
                 .graph
                 .try_get_script_of_mut::<CameraMoviment>(self.camera_node)
             {
+                Log::info("Called Camera");
                 camera_node_script_ref.pitch = 0.0;
                 camera_node_script_ref.yaw = 0.0;
             }
@@ -209,22 +211,6 @@ impl ScriptTrait for PlayerMoviment {
         let mut camera_yaw: f32 = 0.0;
         //Getting variables from others scripts
         {
-            // Receiving the foot collider
-            if let Some(foot_collider_node_script_ref) = context
-                .scene
-                .graph
-                .try_get_script_of::<FootCollider>(self.camera_node)
-            {
-                is_on_air = foot_collider_node_script_ref.is_on_air;
-            }
-            // Receiving the frontal collider
-            if let Some(frontal_collider_node_script_ref) = context
-                .scene
-                .graph
-                .try_get_script_of::<FrontalCollider>(self.camera_node)
-            {
-                is_frontal_collide = frontal_collider_node_script_ref.is_frontal_collide;
-            }
             // Receiving the cameras
             if let Some(camera_node_script_ref) = context
                 .scene
@@ -232,6 +218,24 @@ impl ScriptTrait for PlayerMoviment {
                 .try_get_script_of::<CameraMoviment>(self.camera_node)
             {
                 camera_yaw = camera_node_script_ref.yaw;
+            }
+            
+            // Receiving the foot collider
+            if let Some(foot_collider_node_script_ref) = context
+                .scene
+                .graph
+                .try_get_script_of::<FootCollider>(self.foot_collider_node)
+            {
+                is_on_air = foot_collider_node_script_ref.is_on_air;
+            }
+
+            // Receiving the frontal collider
+            if let Some(frontal_collider_node_script_ref) = context
+                .scene
+                .graph
+                .try_get_script_of::<FrontalCollider>(self.frontal_collider_node)
+            {
+                is_frontal_collide = frontal_collider_node_script_ref.is_frontal_collide;
             }
         }
         //Movement Player Update
@@ -261,12 +265,17 @@ impl ScriptTrait for PlayerMoviment {
             // If we moving right then subtract "side" vector of the body.
             velocity -= body.side_vector() * 2.;
         }
-        //foot_collider::is_on_air
-        if self.jump && false && self.ticks_jump_cooldown <= 3 {
+        // Jump System
+        // Log::info(&format!(
+        //     "Jump: {} Air: {} Ticks: {}",
+        //     self.jump, is_on_air, self.ticks_jump_cooldown
+        // ));
+        if self.jump && !is_on_air && self.ticks_jump_cooldown <= 3 {
             //Check if is the first tick
             if self.ticks_jump_cooldown == -1 {
                 self.ticks_jump_cooldown = 0;
             }
+            Log::info("Called jump");
             // If we moving up add "up" vector of the body
             velocity += body.up_vector() * 2.;
         }

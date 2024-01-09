@@ -47,7 +47,8 @@ impl ScriptTrait for FootCollider {
     }
 
     fn on_update(&mut self, context: &mut ScriptContext) {
-        self.has_ground_contact(context.handle, &context.scene.graph);
+        // Updating the variable
+        self.is_on_air = !self.has_ground_contact(context.handle, &context.scene.graph);
     }
 
     fn id(&self) -> Uuid {
