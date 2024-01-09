@@ -1,7 +1,6 @@
 use fyrox::{
     core::{
-        algebra::{ArrayStorage, Const, Matrix, UnitQuaternion, Vector3, ComplexField},
-        log::Log,
+        algebra::{ArrayStorage, Const, Matrix, UnitQuaternion, Vector3},
         pool::Handle,
         reflect::prelude::*,
         uuid::{uuid, Uuid},
@@ -39,7 +38,7 @@ pub struct PlayerMoviment {
     old_mouse_position: f32,
 }
 impl PlayerMoviment {
-    //Keyboard Detect Function
+    /// Process all keyboard for player moviment
     pub fn process_input_event(&mut self, event: &Event<()>) {
         match event {
             Event::WindowEvent { event, .. } => {
@@ -61,11 +60,53 @@ impl PlayerMoviment {
         }
     }
 
-    //Velocity calculator
+    ///Function to detect if the R keyboard is pressed to reset the scene
+    pub fn reset_player(&mut self, event: &Event<()>, context: &mut ScriptContext) {
+        match event {
+            Event::WindowEvent { event, .. } => {
+                if let WindowEvent::KeyboardInput { event, .. } = event {
+                    if let PhysicalKey::Code(code) = event.physical_key {
+                        match code {
+                            KeyCode::KeyR => {
+                                //Reset Player Observer
+                                if self.ticks_reset_cooldown > 30 {
+                                    // Borrow rigid body node.
+                                    let body =
+                                        context.scene.graph[context.handle].as_rigid_body_mut();
+                                    self.ticks_reset_cooldown = 0;
+                                    self.acceleration = 1.;
+                                    // Reseting moviment
+                                    body.set_lin_vel(Vector3::new(0.0, 0.0, 0.0));
+                                    // Reseting player position
+                                    context.scene.graph[context.handle]
+                                        .local_transform_mut()
+                                        .set_position(Vector3::new(0.082, 3.15, 8.897));
+                                    // Reseting camera position
+                                    if let Some(camera_node_script_ref) =
+                                        context.scene.graph.try_get_script_of_mut::<CameraMoviment>(
+                                            self.camera_node,
+                                        )
+                                    {
+                                        camera_node_script_ref.pitch = 0.0;
+                                        camera_node_script_ref.yaw = 0.0;
+                                    }
+                                }
+                            }
+                            _ => (),
+                        }
+                    }
+                }
+            }
+            _ => (),
+        }
+    }
+
+    /// Calculate the player velocity based in acceleration, also
+    /// will calculate the collisions to stop the velocity
     pub fn velocity(
         &mut self,
         velocity: Matrix<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>>,
-    is_on_air: bool,
+        is_on_air: bool,
         is_frontal_collide: bool,
         is_pressing_s: bool,
         acceleration_mouse: f32,
@@ -146,65 +187,9 @@ impl PlayerMoviment {
         return base_velocity;
     }
 
-    //Reset Scene
-    pub fn reset_player(&mut self, event: &Event<()>) -> bool {
-        match event {
-            Event::WindowEvent { event, .. } => {
-                if let WindowEvent::KeyboardInput { event, .. } = event {
-                    if let PhysicalKey::Code(code) = event.physical_key {
-                        match code {
-                            KeyCode::KeyR => {
-                                return true;
-                            }
-                            _ => (),
-                        }
-                    }
-                }
-            }
-            _ => (),
-        }
-        return false;
-    }
-}
-
-impl_component_provider!(PlayerMoviment);
-
-impl TypeUuidProvider for PlayerMoviment {
-    fn type_uuid() -> Uuid {
-        uuid!("5e5f5d29-a9a9-447e-8010-9f413d9f6efb")
-    }
-}
-
-impl ScriptTrait for PlayerMoviment {
-    fn on_os_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
-        //Keyboard Observer
-        self.process_input_event(event);
-        let reset_player = self.reset_player(event);
-        //Reset Player Observer
-        if reset_player && self.ticks_reset_cooldown > 30 {
-            // Borrow rigid body node.
-            let body = context.scene.graph[context.handle].as_rigid_body_mut();
-            self.ticks_reset_cooldown = 0;
-            self.acceleration = 1.;
-            // Reseting moviment
-            body.set_lin_vel(Vector3::new(0.0, 0.0, 0.0));
-            // Reseting player position
-            context.scene.graph[context.handle]
-                .local_transform_mut()
-                .set_position(Vector3::new(0.082, 3.15, 8.897));
-            // Reseting camera position
-            if let Some(camera_node_script_ref) = context
-                .scene
-                .graph
-                .try_get_script_of_mut::<CameraMoviment>(self.camera_node)
-            {
-                camera_node_script_ref.pitch = 0.0;
-                camera_node_script_ref.yaw = 0.0;
-            }
-        }
-    }
-
-    fn on_update(&mut self, context: &mut ScriptContext) {
+    /// Calculate the player acceleration and then call the function velocity
+    /// to change the player velocity and then change the position of the player
+    pub fn calculate_acceleration(&mut self, context: &mut ScriptContext) {
         let mut is_on_air: bool = false;
         let mut is_frontal_collide: bool = false;
         let mut camera_yaw: f32 = 0.0;
@@ -237,6 +222,13 @@ impl ScriptTrait for PlayerMoviment {
                 is_frontal_collide = frontal_collider_node_script_ref.is_frontal_collide;
             }
         }
+        //Horizontal Mouse View Update
+        context.scene.graph[context.handle]
+            .local_transform_mut()
+            .set_rotation(UnitQuaternion::from_axis_angle(
+                &Vector3::y_axis(),
+                camera_yaw.to_radians() / 3.,
+            ));
         //Movement Player Update
         // Borrow rigid body node.
         let body = context.scene.graph[context.handle].as_rigid_body_mut();
@@ -299,7 +291,7 @@ impl ScriptTrait for PlayerMoviment {
             }
             self.old_mouse_position = _player_mouse_position
         }
-        // Finally new linear velocity.
+        // Change the velocity of the player
         body.set_lin_vel(self.velocity(
             velocity,
             is_on_air,
@@ -307,17 +299,32 @@ impl ScriptTrait for PlayerMoviment {
             dessacelerate,
             mouse_accelerate,
         ));
-        //Horizontal Mouse View Update
-        context.scene.graph[context.handle]
-            .local_transform_mut()
-            .set_rotation(UnitQuaternion::from_axis_angle(
-                &Vector3::y_axis(),
-                camera_yaw.to_radians() / 3.,
-            ));
         //Reset Tick Cooldown
         if self.ticks_reset_cooldown <= 30 {
             self.ticks_reset_cooldown += 1;
         }
+    }
+}
+
+impl_component_provider!(PlayerMoviment);
+
+impl TypeUuidProvider for PlayerMoviment {
+    fn type_uuid() -> Uuid {
+        uuid!("5e5f5d29-a9a9-447e-8010-9f413d9f6efb")
+    }
+}
+
+impl ScriptTrait for PlayerMoviment {
+    fn on_os_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
+        //Keyboard Observer
+        self.process_input_event(event);
+        //Check if player asked for reset
+        self.reset_player(event, context);
+    }
+
+    fn on_update(&mut self, context: &mut ScriptContext) {
+        //Calculate the player accelaration and change the position
+        self.calculate_acceleration(context);
     }
 
     fn id(&self) -> Uuid {
