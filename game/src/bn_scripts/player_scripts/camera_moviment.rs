@@ -1,11 +1,12 @@
 use fyrox::{
     core::{
+        algebra::{UnitQuaternion, Vector3},
         reflect::prelude::*,
         uuid::{uuid, Uuid},
         visitor::prelude::*,
-        TypeUuidProvider, algebra::{UnitQuaternion, Vector3},
+        TypeUuidProvider,
     },
-    event::{Event, DeviceEvent},
+    event::{DeviceEvent, Event},
     impl_component_provider,
     script::{ScriptContext, ScriptTrait},
 };
@@ -45,13 +46,13 @@ impl TypeUuidProvider for CameraMoviment {
 }
 
 impl ScriptTrait for CameraMoviment {
-    fn on_init(&mut self, context: &mut ScriptContext) {
+    fn on_init(&mut self, _context: &mut ScriptContext) {
         // Declaring variables
-        self.pitch = 0.0;
-        self.yaw = 0.0;
+        self.pitch = 0.0; //Vertical View
+        self.yaw = 0.0; //Horizontal View
     }
 
-    fn on_os_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
+    fn on_os_event(&mut self, event: &Event<()>, _context: &mut ScriptContext) {
         // Enable mouse detection
         self.process_input_event(event);
     }

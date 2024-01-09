@@ -1,6 +1,7 @@
 use fyrox::{
     core::{
         algebra::{ArrayStorage, Const, Matrix, UnitQuaternion, Vector3},
+        pool::Handle,
         reflect::prelude::*,
         uuid::{uuid, Uuid},
         visitor::prelude::*,
@@ -9,13 +10,19 @@ use fyrox::{
     event::{ElementState, Event, WindowEvent},
     impl_component_provider,
     keyboard::{KeyCode, PhysicalKey},
+    scene::node::Node,
     script::{ScriptContext, ScriptTrait},
 };
 
-use super::camera_moviment::CameraMoviment;
+use super::{
+    camera_moviment::CameraMoviment, foot_collider::FootCollider, frontal_collider::FrontalCollider,
+};
 
 #[derive(Visit, Reflect, Default, Debug, Clone)]
 pub struct PlayerMoviment {
+    camera_node: Handle<Node>,
+    foot_collider_node: Handle<Node>,
+    frontal_collider_node: Handle<Node>,
     // Player Directions
     position_x: bool,
     position_x_negative: bool,
@@ -43,6 +50,7 @@ impl PlayerMoviment {
                             KeyCode::KeyS => self.position_z_negative = pressed,
                             KeyCode::KeyA => self.position_x = pressed,
                             KeyCode::KeyD => self.position_x_negative = pressed,
+                            KeyCode::Space => self.jump = pressed,
                             _ => (),
                         }
                     }
@@ -142,7 +150,6 @@ impl PlayerMoviment {
         match event {
             Event::WindowEvent { event, .. } => {
                 if let WindowEvent::KeyboardInput { event, .. } = event {
-                    let pressed = event.state == ElementState::Pressed;
                     if let PhysicalKey::Code(code) = event.physical_key {
                         match code {
                             KeyCode::KeyR => {
@@ -168,11 +175,6 @@ impl TypeUuidProvider for PlayerMoviment {
 }
 
 impl ScriptTrait for PlayerMoviment {
-    fn on_init(&mut self, context: &mut ScriptContext) {
-        let node = context.scene.graph.find_by_name_from_root("name").unwrap().0;
-        // let test = context.scene.graph.try_get_script_of_mut::<CameraMoviment>().unwrap();
-    }
-
     fn on_os_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
         //Keyboard Observer
         self.process_input_event(event);
@@ -183,17 +185,55 @@ impl ScriptTrait for PlayerMoviment {
             let body = context.scene.graph[context.handle].as_rigid_body_mut();
             self.ticks_reset_cooldown = 0;
             self.acceleration = 1.;
+            // Reseting moviment
             body.set_lin_vel(Vector3::new(0.0, 0.0, 0.0));
+            // Reseting player position
             context.scene.graph[context.handle]
                 .local_transform_mut()
                 .set_position(Vector3::new(0.082, 3.15, 8.897));
-            //The 3 is mouse sensitivy
-            CameraMoviment::YAW * 3;
-            CameraMoviment::PITCH = 0.;
+            // Reseting camera position
+            if let Some(camera_node_script_ref) = context
+                .scene
+                .graph
+                .try_get_script_of_mut::<CameraMoviment>(self.camera_node)
+            {
+                camera_node_script_ref.pitch = 0.0;
+                camera_node_script_ref.yaw = 0.0;
+            }
         }
     }
 
     fn on_update(&mut self, context: &mut ScriptContext) {
+        let mut is_on_air: bool = false;
+        let mut is_frontal_collide: bool = false;
+        let mut camera_yaw: f32 = 0.0;
+        //Getting variables from others scripts
+        {
+            // Receiving the foot collider
+            if let Some(foot_collider_node_script_ref) = context
+                .scene
+                .graph
+                .try_get_script_of::<FootCollider>(self.camera_node)
+            {
+                is_on_air = foot_collider_node_script_ref.is_on_air;
+            }
+            // Receiving the frontal collider
+            if let Some(frontal_collider_node_script_ref) = context
+                .scene
+                .graph
+                .try_get_script_of::<FrontalCollider>(self.camera_node)
+            {
+                is_frontal_collide = frontal_collider_node_script_ref.is_frontal_collide;
+            }
+            // Receiving the cameras
+            if let Some(camera_node_script_ref) = context
+                .scene
+                .graph
+                .try_get_script_of::<CameraMoviment>(self.camera_node)
+            {
+                camera_yaw = camera_node_script_ref.yaw;
+            }
+        }
         //Movement Player Update
         // Borrow rigid body node.
         let body = context.scene.graph[context.handle].as_rigid_body_mut();
@@ -221,7 +261,8 @@ impl ScriptTrait for PlayerMoviment {
             // If we moving right then subtract "side" vector of the body.
             velocity -= body.side_vector() * 2.;
         }
-        if self.jump && foot_collider::is_on_air && self.ticks_jump_cooldown <= 3 {
+        //foot_collider::is_on_air
+        if self.jump && false && self.ticks_jump_cooldown <= 3 {
             //Check if is the first tick
             if self.ticks_jump_cooldown == -1 {
                 self.ticks_jump_cooldown = 0;
@@ -235,14 +276,15 @@ impl ScriptTrait for PlayerMoviment {
         } else if self.ticks_jump_cooldown > 20 {
             self.ticks_jump_cooldown = -1;
         }
-        if self.old_mouse_position != CameraMoviment::YAW.to_radians() {
+        //CameraMoviment::YAW.to_radians()
+        if self.old_mouse_position != 0. {
             //Calculates the mouse velocity
             let mut _player_mouse_position: f32 = 0.;
             //Negative to Positive
-            if CameraMoviment::YAW.to_radians() < 0. {
-                _player_mouse_position = CameraMoviment::YAW.to_radians().abs();
+            if 0. < 0. {
+                _player_mouse_position = 0.0 //.abs();
             } else {
-                _player_mouse_position = CameraMoviment::YAW.to_radians();
+                _player_mouse_position = 0.;
             }
             //Difference between
             if _player_mouse_position != self.old_mouse_position {
@@ -257,8 +299,8 @@ impl ScriptTrait for PlayerMoviment {
         // Finally new linear velocity.
         body.set_lin_vel(self.velocity(
             velocity,
-            FootCollider::IS_ON_AIR,
-            FrontalCollider::IS_FRONTAL_COLLIDE,
+            is_on_air,
+            is_frontal_collide,
             dessacelerate,
             mouse_accelerate,
         ));
@@ -267,7 +309,7 @@ impl ScriptTrait for PlayerMoviment {
             .local_transform_mut()
             .set_rotation(UnitQuaternion::from_axis_angle(
                 &Vector3::y_axis(),
-                CameraMoviment::YAW.to_radians() / 3,
+                camera_yaw.to_radians() / 3.,
             ));
         //Reset Tick Cooldown
         if self.ticks_reset_cooldown <= 30 {

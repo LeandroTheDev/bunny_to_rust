@@ -41,7 +41,7 @@ impl TypeUuidProvider for FootCollider {
 }
 
 impl ScriptTrait for FootCollider {
-    fn on_init(&mut self, context: &mut ScriptContext) {
+    fn on_init(&mut self, _context: &mut ScriptContext) {
         // Declaring variables
         self.is_on_air = false;
     }

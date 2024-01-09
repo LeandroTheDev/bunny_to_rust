@@ -42,7 +42,7 @@ impl FrontalCollider {
 }
 
 impl ScriptTrait for FrontalCollider {
-    fn on_init(&mut self, context: &mut ScriptContext) {
+    fn on_init(&mut self, _context: &mut ScriptContext) {
         self.is_frontal_collide = false;
     }
 
