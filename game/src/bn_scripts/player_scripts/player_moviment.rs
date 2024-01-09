@@ -1,6 +1,6 @@
 use fyrox::{
     core::{
-        algebra::{ArrayStorage, Const, Matrix, UnitQuaternion, Vector3},
+        algebra::{ArrayStorage, Const, Matrix, UnitQuaternion, Vector3, ComplexField},
         log::Log,
         pool::Handle,
         reflect::prelude::*,
@@ -65,7 +65,7 @@ impl PlayerMoviment {
     pub fn velocity(
         &mut self,
         velocity: Matrix<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>>,
-        is_not_air: bool,
+    is_on_air: bool,
         is_frontal_collide: bool,
         is_pressing_s: bool,
         acceleration_mouse: f32,
@@ -74,7 +74,7 @@ impl PlayerMoviment {
         for i in 0..3 {
             //If is in the air and moving the camera
             if i != 1
-                && !is_not_air
+                && is_on_air
                 && acceleration_mouse != 0.
                 && !is_pressing_s
                 && !is_frontal_collide
@@ -104,14 +104,14 @@ impl PlayerMoviment {
                 self.acceleration += acceleration;
                 base_velocity[i] *= self.acceleration;
             //If is only in the air
-            } else if i != 1 && !is_not_air && !is_pressing_s && !is_frontal_collide {
+            } else if i != 1 && is_on_air && !is_pressing_s && !is_frontal_collide {
                 self.ticks_dessaceleration = 0;
                 base_velocity[i] *= self.acceleration;
 
             //Lowering the acceleartion conditions
             } else if i != 1 {
                 //If is on the ground
-                if is_not_air && !is_frontal_collide {
+                if !is_on_air && !is_frontal_collide {
                     self.ticks_dessaceleration += 1;
                     if self.ticks_dessaceleration >= 20 {
                         self.ticks_dessaceleration = 20;
@@ -198,7 +198,6 @@ impl ScriptTrait for PlayerMoviment {
                 .graph
                 .try_get_script_of_mut::<CameraMoviment>(self.camera_node)
             {
-                Log::info("Called Camera");
                 camera_node_script_ref.pitch = 0.0;
                 camera_node_script_ref.yaw = 0.0;
             }
@@ -219,7 +218,7 @@ impl ScriptTrait for PlayerMoviment {
             {
                 camera_yaw = camera_node_script_ref.yaw;
             }
-            
+
             // Receiving the foot collider
             if let Some(foot_collider_node_script_ref) = context
                 .scene
@@ -266,16 +265,11 @@ impl ScriptTrait for PlayerMoviment {
             velocity -= body.side_vector() * 2.;
         }
         // Jump System
-        // Log::info(&format!(
-        //     "Jump: {} Air: {} Ticks: {}",
-        //     self.jump, is_on_air, self.ticks_jump_cooldown
-        // ));
         if self.jump && !is_on_air && self.ticks_jump_cooldown <= 3 {
             //Check if is the first tick
             if self.ticks_jump_cooldown == -1 {
                 self.ticks_jump_cooldown = 0;
             }
-            Log::info("Called jump");
             // If we moving up add "up" vector of the body
             velocity += body.up_vector() * 2.;
         }
@@ -285,15 +279,15 @@ impl ScriptTrait for PlayerMoviment {
         } else if self.ticks_jump_cooldown > 20 {
             self.ticks_jump_cooldown = -1;
         }
-        //CameraMoviment::YAW.to_radians()
-        if self.old_mouse_position != 0. {
+        // Calculation the acceleration by mouse movement
+        if self.old_mouse_position != camera_yaw.to_radians() {
             //Calculates the mouse velocity
             let mut _player_mouse_position: f32 = 0.;
             //Negative to Positive
-            if 0. < 0. {
-                _player_mouse_position = 0.0 //.abs();
+            if camera_yaw.to_radians() < 0. {
+                _player_mouse_position = camera_yaw.to_radians().abs();
             } else {
-                _player_mouse_position = 0.;
+                _player_mouse_position = camera_yaw.to_radians();
             }
             //Difference between
             if _player_mouse_position != self.old_mouse_position {
