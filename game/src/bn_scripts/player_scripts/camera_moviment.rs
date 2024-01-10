@@ -8,6 +8,7 @@ use fyrox::{
     },
     event::{DeviceEvent, Event},
     impl_component_provider,
+    scene::transform::Transform,
     script::{ScriptContext, ScriptTrait},
 };
 
@@ -17,17 +18,26 @@ pub struct CameraMoviment {
     pub yaw: f32,
 }
 impl CameraMoviment {
-    //Mouse Detect Function
-    pub fn process_input_event(&mut self, event: &Event<()>) {
+    //Mouse Detect Function Pitch
+    pub fn process_camera_moviment_pitch(&mut self, event: &Event<()>, camera_node: &mut Transform) {
         match event {
             Event::DeviceEvent { event, .. } => {
                 if let DeviceEvent::MouseMotion { delta } = event {
                     self.yaw -= delta.0 as f32;
                     self.pitch = (self.pitch + delta.1 as f32).clamp(-90.0, 90.0);
+                    camera_node.set_rotation(UnitQuaternion::from_axis_angle(
+                        &Vector3::x_axis(),
+                        //The 3 is mouse sensitivy
+                        self.pitch.to_radians() / 3.,
+                    ));
                 }
             }
             _ => (),
         }
+    }
+    //Mouse Detect Function Yaw
+    pub fn process_camera_moviment_yaw(camera_node: &mut Transform) {
+        
     }
     pub fn get_pitch(&mut self) -> f32 {
         return self.pitch;
@@ -52,20 +62,10 @@ impl ScriptTrait for CameraMoviment {
         self.yaw = 0.0; //Horizontal View
     }
 
-    fn on_os_event(&mut self, event: &Event<()>, _context: &mut ScriptContext) {
+    fn on_os_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
         // Enable mouse detection
-        self.process_input_event(event);
-    }
-
-    fn on_update(&mut self, context: &mut ScriptContext) {
-        //Mouse Vertical View
-        context.scene.graph[context.handle]
-            .local_transform_mut()
-            .set_rotation(UnitQuaternion::from_axis_angle(
-                &Vector3::x_axis(),
-                //The 3 is mouse sensitivy
-                self.pitch.to_radians() / 3.,
-            ));
+        let camera_node = context.scene.graph[context.handle].local_transform_mut();
+        self.process_camera_moviment_pitch(event, camera_node);
     }
 
     fn id(&self) -> Uuid {

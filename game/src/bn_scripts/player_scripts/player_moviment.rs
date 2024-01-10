@@ -1,6 +1,7 @@
 use fyrox::{
     core::{
         algebra::{ArrayStorage, Const, Matrix, UnitQuaternion, Vector3},
+        log::Log,
         pool::Handle,
         reflect::prelude::*,
         uuid::{uuid, Uuid},
@@ -35,7 +36,8 @@ pub struct PlayerMoviment {
     ticks_reset_cooldown: i32,
     acceleration: f32,
     straffing: bool,
-    old_mouse_position: f32,
+    old_camera_yaw: f32,
+    old_camera_pitch: f32,
 }
 impl PlayerMoviment {
     /// Process all keyboard for player moviment
@@ -107,15 +109,17 @@ impl PlayerMoviment {
         &mut self,
         velocity: Matrix<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>>,
         is_on_air: bool,
+        is_on_slide: bool,
         is_frontal_collide: bool,
         is_pressing_s: bool,
         acceleration_mouse: f32,
     ) -> Matrix<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>> {
         let mut base_velocity = velocity;
+        let calculate_acceleration: bool = is_on_air || is_on_slide;
         for i in 0..3 {
             //If is in the air and moving the camera
             if i != 1
-                && is_on_air
+                && calculate_acceleration
                 && acceleration_mouse != 0.
                 && !is_pressing_s
                 && !is_frontal_collide
@@ -145,7 +149,7 @@ impl PlayerMoviment {
                 self.acceleration += acceleration;
                 base_velocity[i] *= self.acceleration;
             //If is only in the air
-            } else if i != 1 && is_on_air && !is_pressing_s && !is_frontal_collide {
+            } else if i != 1 && calculate_acceleration && !is_pressing_s && !is_frontal_collide {
                 self.ticks_dessaceleration = 0;
                 base_velocity[i] *= self.acceleration;
 
@@ -164,7 +168,9 @@ impl PlayerMoviment {
                     }
                     base_velocity[i] *= self.acceleration;
                     //If is fronta colission
-                } else if is_frontal_collide {
+                }
+                // If is frontal collide
+                else if is_frontal_collide {
                     self.acceleration /= 3.;
                     if self.acceleration <= 1. {
                         self.acceleration = 1.;
@@ -172,14 +178,18 @@ impl PlayerMoviment {
                     }
                     base_velocity[i] *= self.acceleration;
                     //If pressing S
-                } else if is_pressing_s {
+                }
+                // If pressed the S
+                else if is_pressing_s {
                     self.acceleration /= 2.;
                     if self.acceleration <= 1. {
                         self.acceleration = 1.;
                         self.straffing = false;
                     }
                     base_velocity[i] *= self.acceleration;
-                } else {
+                }
+                // In others cases the velocity multiplys by acceleration
+                else {
                     base_velocity[i] *= self.acceleration;
                 }
             }
@@ -191,8 +201,10 @@ impl PlayerMoviment {
     /// to change the player velocity and then change the position of the player
     pub fn calculate_acceleration(&mut self, context: &mut ScriptContext) {
         let mut is_on_air: bool = false;
+        let mut is_on_slide: bool = false;
         let mut is_frontal_collide: bool = false;
         let mut camera_yaw: f32 = 0.0;
+        let mut camera_pitch: f32 = 0.0;
         //Getting variables from others scripts
         {
             // Receiving the cameras
@@ -211,6 +223,7 @@ impl PlayerMoviment {
                 .try_get_script_of::<FootCollider>(self.foot_collider_node)
             {
                 is_on_air = foot_collider_node_script_ref.is_on_air;
+                is_on_slide = foot_collider_node_script_ref.is_on_slider;
             }
 
             // Receiving the frontal collider
@@ -235,7 +248,8 @@ impl PlayerMoviment {
         // Keep only vertical velocity, and drop horizontal.
         let mut velocity = Vector3::new(0.0, body.lin_vel().y, 0.0);
         let mut dessacelerate: bool = false;
-        let mut mouse_accelerate: f32 = 0.;
+        let mut mouse_accelerate_yaw: f32 = 0.;
+        let mut mouse_accelerate_pitch: f32 = 0.;
 
         // Change the velocity depending on the keys pressed.
         if self.position_z || self.straffing {
@@ -248,16 +262,16 @@ impl PlayerMoviment {
             velocity -= body.look_vector() * 2.;
             dessacelerate = true;
         }
-        if self.position_x {
+        if self.position_x && !is_on_slide {
             // If we moving left then add "side" vector of the body.
             velocity += body.side_vector() * 2.;
         }
-        if self.position_x_negative {
+        if self.position_x_negative && !is_on_slide {
             // If we moving right then subtract "side" vector of the body.
             velocity -= body.side_vector() * 2.;
         }
         // Jump System
-        if self.jump && !is_on_air && self.ticks_jump_cooldown <= 3 {
+        if self.jump && !is_on_slide && !is_on_air && self.ticks_jump_cooldown <= 3 {
             //Check if is the first tick
             if self.ticks_jump_cooldown == -1 {
                 self.ticks_jump_cooldown = 0;
@@ -272,32 +286,41 @@ impl PlayerMoviment {
             self.ticks_jump_cooldown = -1;
         }
         // Calculation the acceleration by mouse movement
-        if self.old_mouse_position != camera_yaw.to_radians() {
+        if self.old_camera_yaw != camera_yaw.to_radians() {
             //Calculates the mouse velocity
-            let mut _player_mouse_position: f32 = 0.;
+            let mut mouse_position_yaw: f32 = 0.;
             //Negative to Positive
             if camera_yaw.to_radians() < 0. {
-                _player_mouse_position = camera_yaw.to_radians().abs();
+                mouse_position_yaw = camera_yaw.to_radians().abs();
             } else {
-                _player_mouse_position = camera_yaw.to_radians();
+                mouse_position_yaw = camera_yaw.to_radians();
             }
             //Difference between
-            if _player_mouse_position != self.old_mouse_position {
-                if _player_mouse_position < self.old_mouse_position {
-                    mouse_accelerate = self.old_mouse_position - _player_mouse_position;
+            if mouse_position_yaw != self.old_camera_yaw {
+                if mouse_position_yaw < self.old_camera_yaw {
+                    mouse_accelerate_yaw = self.old_camera_yaw - mouse_position_yaw;
                 } else {
-                    mouse_accelerate = _player_mouse_position - self.old_mouse_position;
+                    mouse_accelerate_yaw = mouse_position_yaw - self.old_camera_yaw;
                 }
             }
-            self.old_mouse_position = _player_mouse_position
+            self.old_camera_yaw = mouse_position_yaw
+        }
+        // Calculation the acceleration by slider moviment
+        if self.old_camera_pitch != camera_pitch.to_radians() {
+            let mut mouse_position_pitch: f32 = 0.;
+            mouse_position_pitch = camera_pitch.to_radians();
+            Log::info(mouse_position_pitch.to_string());
+            
+            self.old_camera_pitch = mouse_position_pitch;
         }
         // Change the velocity of the player
         body.set_lin_vel(self.velocity(
             velocity,
             is_on_air,
+            is_on_slide,
             is_frontal_collide,
             dessacelerate,
-            mouse_accelerate,
+            mouse_accelerate_yaw,
         ));
         //Reset Tick Cooldown
         if self.ticks_reset_cooldown <= 30 {

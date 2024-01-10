@@ -1,11 +1,10 @@
 //Bunny to Rust Dependencies
-pub mod bn_engine;
 pub mod bn_scripts;
 
-use bn_scripts::player_scripts::{
+use bn_scripts::{player_scripts::{
     camera_moviment::CameraMoviment, foot_collider::FootCollider,
     frontal_collider::FrontalCollider, player_hand::PlayerHand, player_moviment::PlayerMoviment,
-};
+}, objects_scripts::slider::Slider};
 //Dependencies
 use fyrox::{
     core::pool::Handle,
@@ -21,6 +20,7 @@ pub struct GameConstructor;
 
 impl PluginConstructor for GameConstructor {
     fn register(&self, context: PluginRegistrationContext) {
+        // Player
         context
             .serialization_context
             .script_constructors
@@ -41,6 +41,11 @@ impl PluginConstructor for GameConstructor {
             .serialization_context
             .script_constructors
             .add::<FrontalCollider>("Frontal Collider");
+        // Objects
+        context
+            .serialization_context
+            .script_constructors
+            .add::<Slider>("Object Slider");
     }
 
     fn create_instance(&self, scene_path: Option<&str>, context: PluginContext) -> Box<dyn Plugin> {
