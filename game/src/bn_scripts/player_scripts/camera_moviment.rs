@@ -5,9 +5,9 @@ use fyrox::{
         uuid::{uuid, Uuid},
         visitor::prelude::*,
         TypeUuidProvider,
+        impl_component_provider,
     },
     event::{DeviceEvent, Event},
-    impl_component_provider,
     scene::transform::Transform,
     script::{ScriptContext, ScriptTrait},
 };
@@ -66,9 +66,5 @@ impl ScriptTrait for CameraMoviment {
         // Enable mouse detection
         let camera_node = context.scene.graph[context.handle].local_transform_mut();
         self.process_camera_moviment_pitch(event, camera_node);
-    }
-
-    fn id(&self) -> Uuid {
-        Self::type_uuid()
     }
 }

@@ -1,12 +1,12 @@
 use fyrox::{
-    core::{        
+    core::{
+        impl_component_provider,
         pool::Handle,
         reflect::prelude::*,
         uuid::{uuid, Uuid},
         visitor::prelude::*,
         TypeUuidProvider,
     },
-    impl_component_provider,
     scene::{collider::Collider, graph::Graph, node::Node, rigidbody::RigidBody},
     script::{ScriptContext, ScriptTrait},
 };
@@ -81,9 +81,5 @@ impl ScriptTrait for FootCollider {
         // Updating the variable
         self.is_on_air = !self.has_ground_contact(context.handle, &context.scene.graph);
         self.is_on_slider = self.has_slider_contact(context.handle, &context.scene.graph);
-    }
-
-    fn id(&self) -> Uuid {
-        Self::type_uuid()
     }
 }

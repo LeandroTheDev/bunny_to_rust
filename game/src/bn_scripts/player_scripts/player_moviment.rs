@@ -1,6 +1,7 @@
 use fyrox::{
     core::{
         algebra::{ArrayStorage, Const, Matrix, UnitQuaternion, Vector3},
+        impl_component_provider,
         log::Log,
         pool::Handle,
         reflect::prelude::*,
@@ -9,11 +10,12 @@ use fyrox::{
         TypeUuidProvider,
     },
     event::{ElementState, Event, WindowEvent},
-    impl_component_provider,
     keyboard::{KeyCode, PhysicalKey},
-    scene::node::Node,
+    scene::{collider::Collider, graph::Graph, node::Node, rigidbody::RigidBody},
     script::{ScriptContext, ScriptTrait},
 };
+
+use crate::bn_scripts::objects_scripts::timer::Timer;
 
 use super::{
     camera_moviment::CameraMoviment, foot_collider::FootCollider, frontal_collider::FrontalCollider,
@@ -24,6 +26,7 @@ pub struct PlayerMoviment {
     camera_node: Handle<Node>,
     foot_collider_node: Handle<Node>,
     frontal_collider_node: Handle<Node>,
+    timer_node: Handle<Node>,
     // Player Directions
     position_x: bool,
     position_x_negative: bool,
@@ -41,20 +44,31 @@ pub struct PlayerMoviment {
 }
 impl PlayerMoviment {
     /// Process all keyboard for player moviment
-    pub fn process_input_event(&mut self, event: &Event<()>) {
+    pub fn process_input_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
         match event {
             Event::WindowEvent { event, .. } => {
                 if let WindowEvent::KeyboardInput { event, .. } = event {
-                    let pressed = event.state == ElementState::Pressed;
-                    if let PhysicalKey::Code(code) = event.physical_key {
-                        match code {
-                            KeyCode::KeyW => self.position_z = pressed,
-                            KeyCode::KeyS => self.position_z_negative = pressed,
-                            KeyCode::KeyA => self.position_x = pressed,
-                            KeyCode::KeyD => self.position_x_negative = pressed,
-                            KeyCode::Space => self.jump = pressed,
-                            _ => (),
+                    // Enabling the timer
+                    if let Some(timer_node_script_ref) = context
+                        .scene
+                        .graph
+                        .try_get_script_of_mut::<Timer>(self.timer_node)
+                    {
+                        let pressed = event.state == ElementState::Pressed;
+                        if let PhysicalKey::Code(code) = event.physical_key {
+                            timer_node_script_ref.stop = false;
+                            match code {
+                                KeyCode::KeyW => self.position_z = pressed,
+                                KeyCode::KeyS => self.position_z_negative = pressed,
+                                KeyCode::KeyA => self.position_x = pressed,
+                                KeyCode::KeyD => self.position_x_negative = pressed,
+                                KeyCode::Space => self.jump = pressed,
+                                KeyCode::KeyR => timer_node_script_ref.reset_timer(),
+                                _ => (),
+                            }
                         }
+                    } else {
+                        Log::err("Timer Error: Cannot retrieve timer data, keyboard packet lost");
                     }
                 }
             }
@@ -310,7 +324,7 @@ impl PlayerMoviment {
             let mut mouse_position_pitch: f32 = 0.;
             mouse_position_pitch = camera_pitch.to_radians();
             Log::info(mouse_position_pitch.to_string());
-            
+
             self.old_camera_pitch = mouse_position_pitch;
         }
         // Change the velocity of the player
@@ -327,6 +341,48 @@ impl PlayerMoviment {
             self.ticks_reset_cooldown += 1;
         }
     }
+
+    /// Detects if player has reached in the end of the map
+    /// the handle is te collider you want to detect, in this case the foot collider
+    pub fn verify_finish(&mut self, handle: Handle<Node>, context: &mut ScriptContext) {
+        let mut stage_finished = false;
+        // Check if player is collided with finish object
+        {
+            let graph = &context.scene.graph;
+            if let Some(collider) = graph.try_get(handle).and_then(|n| n.cast::<Collider>()) {
+                for contact in collider.contacts(&graph.physics) {
+                    for manifold in contact.manifolds.iter() {
+                        // Checking the actual foot collision
+                        if let Some(actual_collider) = graph
+                            .try_get(manifold.rigid_body2)
+                            .and_then(|n| n.cast::<RigidBody>())
+                        {
+                            // If is a slider then
+                            if actual_collider.tag() == "Finish" {
+                                if manifold.local_n1.y.abs() > 0.7
+                                    || manifold.local_n2.y.abs() > 0.7
+                                {
+                                    stage_finished = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Change the timer to finished
+        {
+            if stage_finished {
+                if let Some(timer_node_script_ref) = context
+                    .scene
+                    .graph
+                    .try_get_script_of_mut::<Timer>(self.timer_node)
+                {
+                    timer_node_script_ref.finished = true;
+                }
+            }
+        }
+    }
 }
 
 impl_component_provider!(PlayerMoviment);
@@ -340,7 +396,7 @@ impl TypeUuidProvider for PlayerMoviment {
 impl ScriptTrait for PlayerMoviment {
     fn on_os_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
         //Keyboard Observer
-        self.process_input_event(event);
+        self.process_input_event(event, context);
         //Check if player asked for reset
         self.reset_player(event, context);
     }
@@ -348,9 +404,7 @@ impl ScriptTrait for PlayerMoviment {
     fn on_update(&mut self, context: &mut ScriptContext) {
         //Calculate the player accelaration and change the position
         self.calculate_acceleration(context);
-    }
-
-    fn id(&self) -> Uuid {
-        Self::type_uuid()
+        // Detects if the player has reached the end
+        self.verify_finish(self.foot_collider_node, context);
     }
 }

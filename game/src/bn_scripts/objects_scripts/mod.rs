@@ -1,1 +1,1 @@
-pub mod slider;
+pub mod timer;

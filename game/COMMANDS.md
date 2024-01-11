@@ -6,3 +6,7 @@
 - cargo run --package editor --release
 ### Create script
 - fyrox-template script --name new_script
+### Update template
+- fyrox-template upgrade --version=nightly
+### Update engine
+- cargo update

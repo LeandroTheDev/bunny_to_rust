@@ -1,15 +1,25 @@
 //Bunny to Rust Dependencies
 pub mod bn_scripts;
 
-use bn_scripts::{player_scripts::{
-    camera_moviment::CameraMoviment, foot_collider::FootCollider,
-    frontal_collider::FrontalCollider, player_hand::PlayerHand, player_moviment::PlayerMoviment,
-}, objects_scripts::slider::Slider};
-//Dependencies
+use bn_scripts::{
+    objects_scripts::timer::Timer,
+    player_scripts::{
+        camera_moviment::CameraMoviment, foot_collider::FootCollider,
+        frontal_collider::FrontalCollider, player_hand::PlayerHand,
+        player_moviment::PlayerMoviment,
+    },
+};
+//Engine Dependencies
 use fyrox::{
-    core::pool::Handle,
+    core::{log::Log, pool::Handle},
     event::Event,
-    gui::message::UiMessage,
+    gui::{
+        font::Font,
+        message::{MessageData, UiMessage},
+        text::TextBuilder,
+        widget::{WidgetBuilder, WidgetMessage},
+        HorizontalAlignment, UiNode, VerticalAlignment,
+    },
     plugin::{Plugin, PluginConstructor, PluginContext, PluginRegistrationContext},
     scene::Scene,
 };
@@ -45,7 +55,7 @@ impl PluginConstructor for GameConstructor {
         context
             .serialization_context
             .script_constructors
-            .add::<Slider>("Object Slider");
+            .add::<Timer>("Object Timer");
     }
 
     fn create_instance(&self, scene_path: Option<&str>, context: PluginContext) -> Box<dyn Plugin> {
@@ -55,6 +65,7 @@ impl PluginConstructor for GameConstructor {
 
 pub struct Game {
     scene: Handle<Scene>,
+    timer_text: Handle<UiNode>,
 }
 
 impl Game {
@@ -64,6 +75,7 @@ impl Game {
             .request(scene_path.unwrap_or("data/scenes/scenario.rgs"));
         Self {
             scene: Handle::NONE,
+            timer_text: Handle::NONE,
         }
     }
 }
@@ -82,12 +94,24 @@ impl Plugin for Game {
     }
 
     fn on_ui_message(&mut self, _context: &mut PluginContext, _message: &UiMessage) {
-        // Handle UI events here.
     }
 
     fn on_scene_begin_loading(&mut self, _path: &Path, context: &mut PluginContext) {
         if self.scene.is_some() {
             context.scenes.remove(self.scene);
+        }
+        // Creating the text Timer
+        {
+            let font = context
+                .resource_manager
+                .request::<Font>("data/assets/fonts/BebasNeue-Regular.ttf");
+            self.timer_text = TextBuilder::new(WidgetBuilder::new())
+                .with_font(font)
+                .with_font_size(80.)
+                .with_horizontal_text_alignment(HorizontalAlignment::Left)
+                .with_vertical_text_alignment(VerticalAlignment::Top)
+                .with_text("0:0")
+                .build(&mut context.user_interface.build_ctx());
         }
     }
 

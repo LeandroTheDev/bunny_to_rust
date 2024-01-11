@@ -5,8 +5,8 @@ use fyrox::{
         uuid::{uuid, Uuid},
         visitor::prelude::*,
         TypeUuidProvider,
+        impl_component_provider,
     },
-    impl_component_provider,
     scene::{collider::Collider, graph::Graph, node::Node},
     script::{ScriptContext, ScriptTrait},
 };
@@ -48,9 +48,5 @@ impl ScriptTrait for FrontalCollider {
 
     fn on_update(&mut self, context: &mut ScriptContext) {
         self.is_frontal_collide = self.has_frontal_contact(context.handle, &context.scene.graph);
-    }
-
-    fn id(&self) -> Uuid {
-        Self::type_uuid()
     }
 }

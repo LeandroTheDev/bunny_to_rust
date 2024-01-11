@@ -1,16 +1,16 @@
-V0.3
+V0.1 Alpha 1
 - Moviment system > WASD
 
 https://github.com/LeandroTheDev/rust_project/assets/106118473/89b79468-ccff-4c9c-ac16-56ad82340645
 
-V0.5
+V0.1 Alpha 2
 - Jump system > Space
 - Reset Scene > R
 - Acceleration
 
 https://github.com/LeandroTheDev/rust_project/assets/106118473/1dd31b4c-19a2-47cf-a868-1d6b955e79d9
 
-V0.6
+V0.1 Release
 - Physics improvements
 - Fixed some colliders bug
 - Better reset scene

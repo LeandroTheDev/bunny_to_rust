@@ -1,7 +1,12 @@
-
 use fyrox::{
-    core::{uuid::{Uuid, uuid}, visitor::prelude::*, reflect::prelude::*, TypeUuidProvider},
-    event::Event, impl_component_provider,
+    core::{
+        impl_component_provider,
+        reflect::prelude::*,
+        uuid::{uuid, Uuid},
+        visitor::prelude::*,
+        TypeUuidProvider,
+    },
+    event::Event,
     script::{ScriptContext, ScriptDeinitContext, ScriptTrait},
 };
 
@@ -39,9 +44,4 @@ impl ScriptTrait for PlayerHand {
     fn on_update(&mut self, _context: &mut ScriptContext) {
         // Put object logic here.
     }
-
-    fn id(&self) -> Uuid {
-        Self::type_uuid()
-    }
 }
-    
