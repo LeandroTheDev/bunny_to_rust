@@ -316,22 +316,16 @@
     scene_settings: {
         "data/scenes/scenario.rgs": (
             camera_settings: (
-                position: (38.146072, 5.391641, -4.5637407),
-                yaw: 1.9400057,
-                pitch: 0.15999992,
+                position: (-4.613145, 4.44065, 9.354243),
+                yaw: 1.7400062,
+                pitch: 0.99999905,
             ),
             node_infos: {
                 (
-                    index: 25,
+                    index: 43,
                     generation: 1,
                 ): (
                     is_expanded: false,
-                ),
-                (
-                    index: 5,
-                    generation: 1,
-                ): (
-                    is_expanded: true,
                 ),
                 (
                     index: 19,
@@ -340,49 +334,7 @@
                     is_expanded: false,
                 ),
                 (
-                    index: 44,
-                    generation: 1,
-                ): (
-                    is_expanded: true,
-                ),
-                (
-                    index: 28,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 16,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 40,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 37,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 13,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 6,
-                    generation: 1,
-                ): (
-                    is_expanded: true,
-                ),
-                (
-                    index: 22,
+                    index: 25,
                     generation: 1,
                 ): (
                     is_expanded: false,
@@ -394,7 +346,37 @@
                     is_expanded: false,
                 ),
                 (
-                    index: 2,
+                    index: 7,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 13,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 16,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 45,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
+                    index: 6,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
+                    index: 42,
                     generation: 1,
                 ): (
                     is_expanded: true,
@@ -406,7 +388,37 @@
                     is_expanded: true,
                 ),
                 (
-                    index: 7,
+                    index: 37,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 0,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
+                    index: 34,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 1,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
+                    index: 5,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
+                    index: 40,
                     generation: 1,
                 ): (
                     is_expanded: false,
@@ -424,46 +436,34 @@
                     is_expanded: true,
                 ),
                 (
-                    index: 43,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 42,
-                    generation: 1,
-                ): (
-                    is_expanded: true,
-                ),
-                (
-                    index: 34,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 0,
-                    generation: 1,
-                ): (
-                    is_expanded: true,
-                ),
-                (
-                    index: 1,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
                     index: 15,
                     generation: 1,
                 ): (
                     is_expanded: true,
                 ),
                 (
-                    index: 45,
+                    index: 2,
                     generation: 1,
                 ): (
                     is_expanded: true,
+                ),
+                (
+                    index: 28,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 44,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
+                    index: 22,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
                 ),
             },
         ),
@@ -475,7 +475,7 @@
     ),
     windows: (
         window_position: (3.0, 205.0),
-        window_size: (750.0, 504.0),
+        window_size: (878.0, 751.0),
         layout: None,
     ),
 )

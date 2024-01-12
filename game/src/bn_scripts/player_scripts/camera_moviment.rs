@@ -1,14 +1,15 @@
 use fyrox::{
     core::{
         algebra::{UnitQuaternion, Vector3},
+        impl_component_provider,
+        pool::Handle,
         reflect::prelude::*,
         uuid::{uuid, Uuid},
         visitor::prelude::*,
         TypeUuidProvider,
-        impl_component_provider,
     },
     event::{DeviceEvent, Event},
-    scene::transform::Transform,
+    scene::node::Node,
     script::{ScriptContext, ScriptTrait},
 };
 
@@ -16,34 +17,42 @@ use fyrox::{
 pub struct CameraMoviment {
     pub pitch: f32,
     pub yaw: f32,
+    player_node: Handle<Node>,
 }
 impl CameraMoviment {
     //Mouse Detect Function Pitch
-    pub fn process_camera_moviment_pitch(&mut self, event: &Event<()>, camera_node: &mut Transform) {
+    fn process_camera_moviment_pitch(&mut self, event: &Event<()>, camera_node: &mut Node) {
         match event {
             Event::DeviceEvent { event, .. } => {
                 if let DeviceEvent::MouseMotion { delta } = event {
-                    self.yaw -= delta.0 as f32;
-                    self.pitch = (self.pitch + delta.1 as f32).clamp(-90.0, 90.0);
-                    camera_node.set_rotation(UnitQuaternion::from_axis_angle(
-                        &Vector3::x_axis(),
-                        //The 3 is mouse sensitivy
-                        self.pitch.to_radians() / 3.,
-                    ));
+                    self.pitch = (self.pitch + delta.1 as f32).clamp(-180.0, 180.0);
+                    camera_node.local_transform_mut().set_rotation(
+                        UnitQuaternion::from_axis_angle(
+                            &Vector3::x_axis(),
+                            self.pitch.to_radians() / 3.,
+                        ),
+                    );
                 }
             }
             _ => (),
         }
     }
     //Mouse Detect Function Yaw
-    pub fn process_camera_moviment_yaw(_camera_node: &mut Transform) {
-        
-    }
-    pub fn get_pitch(&mut self) -> f32 {
-        return self.pitch;
-    }
-    pub fn get_yaw(&mut self) -> f32 {
-        return self.yaw;
+    fn process_camera_moviment_yaw(&mut self, event: &Event<()>, player_node: &mut Node) {
+        match event {
+            Event::DeviceEvent { event, .. } => {
+                if let DeviceEvent::MouseMotion { delta } = event {
+                    self.yaw -= delta.0 as f32;
+                    player_node.local_transform_mut().set_rotation(
+                        UnitQuaternion::from_axis_angle(
+                            &Vector3::y_axis(),
+                            self.yaw.to_radians() / 3.,
+                        ),
+                    );
+                }
+            }
+            _ => (),
+        }
     }
 }
 
@@ -64,7 +73,9 @@ impl ScriptTrait for CameraMoviment {
 
     fn on_os_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
         // Enable mouse detection
-        let camera_node = context.scene.graph[context.handle].local_transform_mut();
-        self.process_camera_moviment_pitch(event, camera_node);
+        // Process Vertical View
+        self.process_camera_moviment_pitch(event, &mut context.scene.graph[context.handle]);
+        // Process Horizontal View
+        self.process_camera_moviment_yaw(event, &mut context.scene.graph[self.player_node]);
     }
 }

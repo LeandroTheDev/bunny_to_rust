@@ -1,6 +1,6 @@
 use fyrox::{
     core::{
-        algebra::{ArrayStorage, Const, Matrix, UnitQuaternion, Vector3},
+        algebra::{ArrayStorage, Const, Matrix, Vector3},
         impl_component_provider,
         log::Log,
         pool::Handle,
@@ -11,7 +11,7 @@ use fyrox::{
     },
     event::{ElementState, Event, WindowEvent},
     keyboard::{KeyCode, PhysicalKey},
-    scene::{collider::Collider, node::Node, rigidbody::RigidBody},
+    scene::{collider::Collider, node::Node, rigidbody::RigidBody, transform::Transform},
     script::{ScriptContext, ScriptTrait},
 };
 
@@ -92,18 +92,9 @@ impl PlayerMoviment {
                                     // Reseting moviment
                                     body.set_lin_vel(Vector3::new(0.0, 0.0, 0.0));
                                     // Reseting player position
-                                    context.scene.graph[context.handle]
-                                        .local_transform_mut()
-                                        .set_position(Vector3::new(0.082, 3.15, 8.897));
-                                    // Reseting camera position
-                                    if let Some(camera_node_script_ref) =
-                                        context.scene.graph.try_get_script_of_mut::<CameraMoviment>(
-                                            self.camera_node,
-                                        )
-                                    {
-                                        camera_node_script_ref.pitch = 0.0;
-                                        camera_node_script_ref.yaw = 0.0;
-                                    }
+                                    let player: &mut Transform =
+                                        context.scene.graph[context.handle].local_transform_mut();
+                                    player.set_position(Vector3::new(0.082, 3.15, 8.897));
                                 }
                             }
                             _ => (),
@@ -306,13 +297,6 @@ impl PlayerMoviment {
             }
         }
         let camera_yaw_radians: f32 = camera_yaw.to_radians();
-        //Horizontal Mouse View Update
-        context.scene.graph[context.handle]
-            .local_transform_mut()
-            .set_rotation(UnitQuaternion::from_axis_angle(
-                &Vector3::y_axis(),
-                camera_yaw_radians / 3.,
-            ));
         // Getting the mouse direction
         let mouse_direction_yaw: &str;
         if camera_yaw_radians > self.old_camera_yaw {
