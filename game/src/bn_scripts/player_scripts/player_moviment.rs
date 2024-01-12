@@ -1,8 +1,9 @@
 use fyrox::{
     core::{
-        algebra::{ArrayStorage, Const, Matrix, Quaternion, UnitQuaternion, Vector3, Vector4},
+        algebra::{ArrayStorage, Const, Matrix, UnitQuaternion, Vector3},
         impl_component_provider,
         log::Log,
+        num_traits::Float,
         pool::Handle,
         reflect::prelude::*,
         uuid::{uuid, Uuid},
@@ -85,19 +86,25 @@ impl PlayerMoviment {
                                 //Reset Player Observer
                                 if self.ticks_reset_cooldown > 30 {
                                     // Borrow rigid body node.
-                                    {
-                                        let body =
-                                            context.scene.graph[context.handle].as_rigid_body_mut();
-                                        self.ticks_reset_cooldown = 0;
-                                        self.acceleration = 1.;
-                                        // Reseting moviment
-                                        body.set_lin_vel(Vector3::new(0.0, 0.0, 0.0));
-                                    }
+                                    let body =
+                                        context.scene.graph[context.handle].as_rigid_body_mut();
+                                    self.ticks_reset_cooldown = 0;
+                                    self.acceleration = 1.;
+                                    // Reseting moviment
+                                    body.set_lin_vel(Vector3::new(0.0, 0.0, 0.0));
                                     // Reseting player position
                                     let player: &mut Transform =
                                         context.scene.graph[context.handle].local_transform_mut();
                                     player.set_position(Vector3::new(0.082, 3.15, 8.897));
+                                    // Send a message to reset the pitch view and yaw variable
                                     context.message_sender.send_global("reset_camera");
+                                    // Reseting the Yaw
+                                    context.scene.graph[context.handle]
+                                        .local_transform_mut()
+                                        .set_rotation(UnitQuaternion::from_axis_angle(
+                                            &Vector3::y_axis(),
+                                            (540.).to_radians(),
+                                        ));
                                 }
                             }
                             _ => (),
@@ -299,6 +306,12 @@ impl PlayerMoviment {
                 is_frontal_collide = false;
             }
         }
+        context.scene.graph[context.handle]
+            .local_transform_mut()
+            .set_rotation(UnitQuaternion::from_axis_angle(
+                &Vector3::y_axis(),
+                camera_yaw.to_radians() / 3.,
+            ));
         let camera_yaw_radians: f32 = camera_yaw.to_radians();
         // Getting the mouse direction
         let mouse_direction_yaw: &str;

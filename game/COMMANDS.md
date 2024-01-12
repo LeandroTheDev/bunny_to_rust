@@ -1,4 +1,6 @@
 ### New project
+- cargo install fyrox-template
+- > First time only
 - fyrox-template init --name bunny_to_rust --style 3d
 ### Running the game
 - cargo run --package executor --release

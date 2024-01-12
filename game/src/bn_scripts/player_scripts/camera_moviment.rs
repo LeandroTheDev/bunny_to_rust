@@ -2,7 +2,6 @@ use fyrox::{
     core::{
         algebra::{UnitQuaternion, Vector3},
         impl_component_provider,
-        log::Log,
         pool::Handle,
         reflect::prelude::*,
         uuid::{uuid, Uuid},
@@ -18,6 +17,7 @@ use fyrox::{
 pub struct CameraMoviment {
     pub pitch: f32,
     pub yaw: f32,
+    first_load: bool,
     player_node: Handle<Node>,
 }
 impl CameraMoviment {
@@ -26,7 +26,7 @@ impl CameraMoviment {
         match event {
             Event::DeviceEvent { event, .. } => {
                 if let DeviceEvent::MouseMotion { delta } = event {
-                    self.pitch = (self.pitch + delta.1 as f32).clamp(-180.0, 180.0);
+                    self.pitch = (self.pitch + delta.1 as f32).clamp(-90.0, 90.0);
                     camera_node.local_transform_mut().set_rotation(
                         UnitQuaternion::from_axis_angle(
                             &Vector3::x_axis(),
@@ -39,17 +39,13 @@ impl CameraMoviment {
         }
     }
     //Mouse Detect Function Yaw
-    fn process_camera_moviment_yaw(&mut self, event: &Event<()>, player_node: &mut Node) {
+    fn process_camera_moviment_yaw(&mut self, event: &Event<()>) {
+        //Notes, the camera moviment is handled by the moviment, because for some reason
+        //if this is handled by the camera script will cause camera lag
         match event {
             Event::DeviceEvent { event, .. } => {
                 if let DeviceEvent::MouseMotion { delta } = event {
                     self.yaw -= delta.0 as f32;
-                    player_node.local_transform_mut().set_rotation(
-                        UnitQuaternion::from_axis_angle(
-                            &Vector3::y_axis(),
-                            self.yaw.to_radians() / 3.,
-                        ),
-                    );
                 }
             }
             _ => (),
@@ -57,49 +53,16 @@ impl CameraMoviment {
     }
     // Reset the view to default of level
     fn reset_camera_moviment_with_script_message(&mut self, context: &mut ScriptMessageContext) {
-        self.yaw = 180. * 3.;
+        self.yaw = 540.;
         self.pitch = 0.;
-        {
-            let player_node = &mut context.scene.graph[self.player_node];
-            player_node
-                .local_transform_mut()
-                .set_rotation(UnitQuaternion::from_axis_angle(
-                    &Vector3::y_axis(),
-                    self.yaw.to_radians(),
-                ));
-        }
-        {
-            let camera_node = &mut context.scene.graph[context.handle];
-            camera_node
-                .local_transform_mut()
-                .set_rotation(UnitQuaternion::from_axis_angle(
-                    &Vector3::x_axis(),
-                    self.pitch.to_radians(),
-                ));
-        }
-    }
 
-    fn reset_camera_moviment(&mut self, context: &mut ScriptContext) {
-        self.yaw = 180. * 3.;
-        self.pitch = 0.;
-        {
-            let player_node = &mut context.scene.graph[self.player_node];
-            player_node
-                .local_transform_mut()
-                .set_rotation(UnitQuaternion::from_axis_angle(
-                    &Vector3::y_axis(),
-                    self.yaw.to_radians(),
-                ));
-        }
-        {
-            let camera_node = &mut context.scene.graph[context.handle];
-            camera_node
-                .local_transform_mut()
-                .set_rotation(UnitQuaternion::from_axis_angle(
-                    &Vector3::x_axis(),
-                    self.pitch.to_radians(),
-                ));
-        }
+        let camera_node = &mut context.scene.graph[context.handle];
+        camera_node
+            .local_transform_mut()
+            .set_rotation(UnitQuaternion::from_axis_angle(
+                &Vector3::x_axis(),
+                self.pitch.to_radians(),
+            ));
     }
 }
 
@@ -117,7 +80,6 @@ impl ScriptTrait for CameraMoviment {
         context
             .message_dispatcher
             .subscribe_to::<&str>(context.handle);
-        self.reset_camera_moviment(context);
     }
 
     fn on_os_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
@@ -125,7 +87,7 @@ impl ScriptTrait for CameraMoviment {
         // Process Vertical View
         self.process_camera_moviment_pitch(event, &mut context.scene.graph[context.handle]);
         // Process Horizontal View
-        self.process_camera_moviment_yaw(event, &mut context.scene.graph[self.player_node]);
+        self.process_camera_moviment_yaw(event);
     }
 
     fn on_message(
