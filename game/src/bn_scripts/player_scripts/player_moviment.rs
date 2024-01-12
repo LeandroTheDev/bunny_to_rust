@@ -1,6 +1,6 @@
 use fyrox::{
     core::{
-        algebra::{ArrayStorage, Const, Matrix, Vector3},
+        algebra::{ArrayStorage, Const, Matrix, Quaternion, UnitQuaternion, Vector3, Vector4},
         impl_component_provider,
         log::Log,
         pool::Handle,
@@ -85,16 +85,19 @@ impl PlayerMoviment {
                                 //Reset Player Observer
                                 if self.ticks_reset_cooldown > 30 {
                                     // Borrow rigid body node.
-                                    let body =
-                                        context.scene.graph[context.handle].as_rigid_body_mut();
-                                    self.ticks_reset_cooldown = 0;
-                                    self.acceleration = 1.;
-                                    // Reseting moviment
-                                    body.set_lin_vel(Vector3::new(0.0, 0.0, 0.0));
+                                    {
+                                        let body =
+                                            context.scene.graph[context.handle].as_rigid_body_mut();
+                                        self.ticks_reset_cooldown = 0;
+                                        self.acceleration = 1.;
+                                        // Reseting moviment
+                                        body.set_lin_vel(Vector3::new(0.0, 0.0, 0.0));
+                                    }
                                     // Reseting player position
                                     let player: &mut Transform =
                                         context.scene.graph[context.handle].local_transform_mut();
                                     player.set_position(Vector3::new(0.082, 3.15, 8.897));
+                                    context.message_sender.send_global("reset_camera");
                                 }
                             }
                             _ => (),

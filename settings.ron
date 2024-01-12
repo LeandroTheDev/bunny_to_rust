@@ -316,61 +316,13 @@
     scene_settings: {
         "data/scenes/scenario.rgs": (
             camera_settings: (
-                position: (-4.613145, 4.44065, 9.354243),
-                yaw: 1.7400062,
-                pitch: 0.99999905,
+                position: (-0.58128214, 2.786417, 9.321709),
+                yaw: 11.450044,
+                pitch: -0.110000804,
             ),
             node_infos: {
                 (
-                    index: 43,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 19,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 25,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 31,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 7,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 13,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 16,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 45,
-                    generation: 1,
-                ): (
-                    is_expanded: true,
-                ),
-                (
-                    index: 6,
+                    index: 1,
                     generation: 1,
                 ): (
                     is_expanded: true,
@@ -382,19 +334,13 @@
                     is_expanded: true,
                 ),
                 (
-                    index: 4,
-                    generation: 1,
-                ): (
-                    is_expanded: true,
-                ),
-                (
-                    index: 37,
+                    index: 31,
                     generation: 1,
                 ): (
                     is_expanded: false,
                 ),
                 (
-                    index: 0,
+                    index: 5,
                     generation: 1,
                 ): (
                     is_expanded: true,
@@ -406,13 +352,13 @@
                     is_expanded: false,
                 ),
                 (
-                    index: 1,
+                    index: 3,
                     generation: 1,
                 ): (
                     is_expanded: true,
                 ),
                 (
-                    index: 5,
+                    index: 0,
                     generation: 1,
                 ): (
                     is_expanded: true,
@@ -424,22 +370,16 @@
                     is_expanded: false,
                 ),
                 (
-                    index: 10,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 3,
-                    generation: 1,
-                ): (
-                    is_expanded: true,
-                ),
-                (
                     index: 15,
                     generation: 1,
                 ): (
                     is_expanded: true,
+                ),
+                (
+                    index: 7,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
                 ),
                 (
                     index: 2,
@@ -448,7 +388,25 @@
                     is_expanded: true,
                 ),
                 (
-                    index: 28,
+                    index: 25,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 45,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
+                    index: 13,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 37,
                     generation: 1,
                 ): (
                     is_expanded: false,
@@ -465,6 +423,48 @@
                 ): (
                     is_expanded: false,
                 ),
+                (
+                    index: 4,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
+                    index: 43,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 16,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 19,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 28,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 6,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
+                    index: 10,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
             },
         ),
     },
@@ -474,8 +474,8 @@
         ],
     ),
     windows: (
-        window_position: (3.0, 205.0),
-        window_size: (878.0, 751.0),
+        window_position: (251.0, 280.0),
+        window_size: (1090.0, 939.0),
         layout: None,
     ),
 )

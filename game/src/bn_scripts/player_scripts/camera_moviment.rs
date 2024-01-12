@@ -2,6 +2,7 @@ use fyrox::{
     core::{
         algebra::{UnitQuaternion, Vector3},
         impl_component_provider,
+        log::Log,
         pool::Handle,
         reflect::prelude::*,
         uuid::{uuid, Uuid},
@@ -10,7 +11,7 @@ use fyrox::{
     },
     event::{DeviceEvent, Event},
     scene::node::Node,
-    script::{ScriptContext, ScriptTrait},
+    script::{ScriptContext, ScriptMessageContext, ScriptMessagePayload, ScriptTrait},
 };
 
 #[derive(Visit, Reflect, Default, Debug, Clone)]
@@ -54,6 +55,52 @@ impl CameraMoviment {
             _ => (),
         }
     }
+    // Reset the view to default of level
+    fn reset_camera_moviment_with_script_message(&mut self, context: &mut ScriptMessageContext) {
+        self.yaw = 180. * 3.;
+        self.pitch = 0.;
+        {
+            let player_node = &mut context.scene.graph[self.player_node];
+            player_node
+                .local_transform_mut()
+                .set_rotation(UnitQuaternion::from_axis_angle(
+                    &Vector3::y_axis(),
+                    self.yaw.to_radians(),
+                ));
+        }
+        {
+            let camera_node = &mut context.scene.graph[context.handle];
+            camera_node
+                .local_transform_mut()
+                .set_rotation(UnitQuaternion::from_axis_angle(
+                    &Vector3::x_axis(),
+                    self.pitch.to_radians(),
+                ));
+        }
+    }
+
+    fn reset_camera_moviment(&mut self, context: &mut ScriptContext) {
+        self.yaw = 180. * 3.;
+        self.pitch = 0.;
+        {
+            let player_node = &mut context.scene.graph[self.player_node];
+            player_node
+                .local_transform_mut()
+                .set_rotation(UnitQuaternion::from_axis_angle(
+                    &Vector3::y_axis(),
+                    self.yaw.to_radians(),
+                ));
+        }
+        {
+            let camera_node = &mut context.scene.graph[context.handle];
+            camera_node
+                .local_transform_mut()
+                .set_rotation(UnitQuaternion::from_axis_angle(
+                    &Vector3::x_axis(),
+                    self.pitch.to_radians(),
+                ));
+        }
+    }
 }
 
 impl_component_provider!(CameraMoviment);
@@ -65,10 +112,12 @@ impl TypeUuidProvider for CameraMoviment {
 }
 
 impl ScriptTrait for CameraMoviment {
-    fn on_init(&mut self, _context: &mut ScriptContext) {
-        // Declaring variables
-        self.pitch = 0.0; //Vertical View
-        self.yaw = 0.0; //Horizontal View
+    fn on_start(&mut self, context: &mut ScriptContext) {
+        // Subscribing messages
+        context
+            .message_dispatcher
+            .subscribe_to::<&str>(context.handle);
+        self.reset_camera_moviment(context);
     }
 
     fn on_os_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
@@ -77,5 +126,18 @@ impl ScriptTrait for CameraMoviment {
         self.process_camera_moviment_pitch(event, &mut context.scene.graph[context.handle]);
         // Process Horizontal View
         self.process_camera_moviment_yaw(event, &mut context.scene.graph[self.player_node]);
+    }
+
+    fn on_message(
+        &mut self,
+        message: &mut dyn ScriptMessagePayload,
+        context: &mut ScriptMessageContext,
+    ) {
+        // React to message.
+        if let Some(data) = message.downcast_ref::<&str>() {
+            if data == &"reset_camera" {
+                self.reset_camera_moviment_with_script_message(context);
+            }
+        }
     }
 }
