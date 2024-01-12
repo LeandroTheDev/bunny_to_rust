@@ -30,15 +30,19 @@ How to play?
 - Pressing the space you can jump.
 - The bunnyhop system, you gain acceleration while in the air, and while moving your player from right to left, use this to gain velocity to go to others platforms in the scene.
 - You can surf in sliders to gain more velocity.
-- If you frontal collide with something you will lose the acceleration.
+- If you frontal collide with something you will lose all the acceleration.
 - The objective is to get to the end of the map in short time.
+- Getting high velocity maybe difficult to past some parts of the maps, so if you are not pressing the W you will slowly lose acceleration and not gain acceleration in air
+- High velocity also gives you less acceleration
+- Sliders can increase acceleration
+- The timer will start after the first jump
 
 How to compile the project?
 - Download Rust
 - Open terminal
 - cargo install fyrox-template
 - fyrox-template init --name bunny_to_rust --style 3d
-- > Obs: project template always get from latest version and this project can be outdated for template
+- > Obs: project template always get from latest version and this project can be outdated for template, if this happens download in releases the executors for this version
 - place all files to this new folder and overwrite if needed
 - cargo run --package executor --release
 > This will compile the project, will take a long time..., if you just testing just download the lastest [release](https://github.com/LeandroTheDev/rust_project/releases)

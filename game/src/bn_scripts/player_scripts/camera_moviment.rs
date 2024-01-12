@@ -36,7 +36,7 @@ impl CameraMoviment {
         }
     }
     //Mouse Detect Function Yaw
-    pub fn process_camera_moviment_yaw(camera_node: &mut Transform) {
+    pub fn process_camera_moviment_yaw(_camera_node: &mut Transform) {
         
     }
     pub fn get_pitch(&mut self) -> f32 {

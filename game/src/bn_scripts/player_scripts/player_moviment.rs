@@ -11,7 +11,7 @@ use fyrox::{
     },
     event::{ElementState, Event, WindowEvent},
     keyboard::{KeyCode, PhysicalKey},
-    scene::{collider::Collider, graph::Graph, node::Node, rigidbody::RigidBody},
+    scene::{collider::Collider, node::Node, rigidbody::RigidBody},
     script::{ScriptContext, ScriptTrait},
 };
 
@@ -40,7 +40,6 @@ pub struct PlayerMoviment {
     acceleration: f32,
     straffing: bool,
     old_camera_yaw: f32,
-    old_camera_pitch: f32,
 }
 impl PlayerMoviment {
     /// Process all keyboard for player moviment
@@ -56,7 +55,6 @@ impl PlayerMoviment {
                     {
                         let pressed = event.state == ElementState::Pressed;
                         if let PhysicalKey::Code(code) = event.physical_key {
-                            timer_node_script_ref.stop = false;
                             match code {
                                 KeyCode::KeyW => self.position_z = pressed,
                                 KeyCode::KeyS => self.position_z_negative = pressed,
@@ -126,49 +124,83 @@ impl PlayerMoviment {
         is_on_slide: bool,
         is_frontal_collide: bool,
         is_pressing_s: bool,
-        acceleration_mouse: f32,
+        acceleration_mouse_yaw: f32,
+        acceleration_mouse_pitch: f32,
+        direction_mouse_yaw: &str,
     ) -> Matrix<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>> {
         let mut base_velocity = velocity;
-        let calculate_acceleration: bool = is_on_air || is_on_slide;
+        let calculate_acceleration: bool =
+            (is_on_air || is_on_slide) && !is_pressing_s && !is_frontal_collide && self.position_z;
+        // We use the for to
         for i in 0..3 {
+            if i == 1 {
+                continue;
+            };
             //If is in the air and moving the camera
-            if i != 1
-                && calculate_acceleration
-                && acceleration_mouse != 0.
-                && !is_pressing_s
-                && !is_frontal_collide
+            if calculate_acceleration
+                && (acceleration_mouse_yaw != 0. || acceleration_mouse_pitch != 0.)
             {
                 let acceleration: f32;
                 //Determines the maximum speed earned
-                if self.acceleration <= 5. {
-                    if acceleration_mouse >= 0.02 {
-                        acceleration = 0.02;
+                // Low speed needs to get a good acceleration
+                if self.acceleration <= 8. {
+                    // Check if the acceleration is more than should be
+                    if acceleration_mouse_yaw >= 0.02 {
+                        acceleration = 0.010;
                     } else {
-                        acceleration = acceleration_mouse;
+                        // Add acceleration
+                        acceleration = acceleration_mouse_yaw / 20.0;
                     }
-                } else if self.acceleration <= 5. {
-                    if acceleration_mouse >= 0.02 {
-                        acceleration = 0.02;
-                    } else {
-                        acceleration = acceleration_mouse;
-                    }
-                } else {
-                    if acceleration_mouse >= 0.005 {
+                }
+                // Medium speed needs get a bad velocity
+                else if self.acceleration > 8. && self.acceleration < 16. {
+                    // Check if the acceleration is more than should be
+                    if acceleration_mouse_yaw >= 0.02 {
                         acceleration = 0.005;
                     } else {
-                        acceleration = acceleration_mouse;
+                        // Add acceleration
+                        acceleration = acceleration_mouse_yaw / 40.0;
+                    }
+                }
+                // High speed needs to block ultra gain velocity
+                else {
+                    // Check if the acceleration is more than should be
+                    if acceleration_mouse_yaw >= 0.02 {
+                        acceleration = 0.002;
+                    } else {
+                        // Add acceleration
+                        acceleration = acceleration_mouse_yaw / 100.0;
                     }
                 }
                 self.ticks_dessaceleration = 0;
-                self.acceleration += acceleration;
-                base_velocity[i] *= self.acceleration;
+                // Not pressing W situation
+                if !self.position_z {
+                    //Base Acceleration /    Reduced by 0.5%     /     Slider Acceleration
+                    base_velocity[i] = (base_velocity[i] * 0.995) + acceleration_mouse_pitch;
+                }
+                // Normal situation
+                else {
+                    let acceleration_calculated: f32;
+                    // Calculating the keyboard A/D and camera direction
+                    if (direction_mouse_yaw == "left" && self.position_x)
+                        || (direction_mouse_yaw == "right" && self.position_x_negative)
+                    {
+                        acceleration_calculated = acceleration * 1.5;
+                    } else {
+                        acceleration_calculated = acceleration;
+                    }
+                    //Base Acceleration / Air Acceleration / Slider Acceleration
+                    self.acceleration += acceleration_calculated + acceleration_mouse_pitch;
+                    base_velocity[i] *= self.acceleration;
+                }
+            }
             //If is only in the air
-            } else if i != 1 && calculate_acceleration && !is_pressing_s && !is_frontal_collide {
+            else if calculate_acceleration {
                 self.ticks_dessaceleration = 0;
                 base_velocity[i] *= self.acceleration;
-
+            }
             //Lowering the acceleartion conditions
-            } else if i != 1 {
+            else {
                 //If is on the ground
                 if !is_on_air && !is_frontal_collide {
                     self.ticks_dessaceleration += 1;
@@ -202,7 +234,9 @@ impl PlayerMoviment {
                     }
                     base_velocity[i] *= self.acceleration;
                 }
-                // In others cases the velocity multiplys by acceleration
+                // In others cases the velocity stays equals
+                // this should not to be called anyways but is good to have
+                // a treatment
                 else {
                     base_velocity[i] *= self.acceleration;
                 }
@@ -214,11 +248,24 @@ impl PlayerMoviment {
     /// Calculate the player acceleration and then call the function velocity
     /// to change the player velocity and then change the position of the player
     pub fn calculate_acceleration(&mut self, context: &mut ScriptContext) {
-        let mut is_on_air: bool = false;
-        let mut is_on_slide: bool = false;
-        let mut is_frontal_collide: bool = false;
-        let mut camera_yaw: f32 = 0.0;
-        let mut camera_pitch: f32 = 0.0;
+        // Start the timer
+        if self.jump {
+            // Enabling the timer
+            if let Some(timer_node_script_ref) = context
+                .scene
+                .graph
+                .try_get_script_of_mut::<Timer>(self.timer_node)
+            {
+                timer_node_script_ref.stop = false;
+            } else {
+                Log::err("Timer Error: cannot start the timer, reference not found");
+            }
+        }
+        let is_on_air: bool;
+        let is_on_slide: bool;
+        let is_frontal_collide: bool;
+        let camera_yaw: f32;
+        let camera_pitch: f32;
         //Getting variables from others scripts
         {
             // Receiving the cameras
@@ -228,6 +275,10 @@ impl PlayerMoviment {
                 .try_get_script_of::<CameraMoviment>(self.camera_node)
             {
                 camera_yaw = camera_node_script_ref.yaw;
+                camera_pitch = camera_node_script_ref.pitch;
+            } else {
+                camera_yaw = 0.0;
+                camera_pitch = 0.0;
             }
 
             // Receiving the foot collider
@@ -238,6 +289,9 @@ impl PlayerMoviment {
             {
                 is_on_air = foot_collider_node_script_ref.is_on_air;
                 is_on_slide = foot_collider_node_script_ref.is_on_slider;
+            } else {
+                is_on_air = false;
+                is_on_slide = false;
             }
 
             // Receiving the frontal collider
@@ -247,15 +301,27 @@ impl PlayerMoviment {
                 .try_get_script_of::<FrontalCollider>(self.frontal_collider_node)
             {
                 is_frontal_collide = frontal_collider_node_script_ref.is_frontal_collide;
+            } else {
+                is_frontal_collide = false;
             }
         }
+        let camera_yaw_radians: f32 = camera_yaw.to_radians();
         //Horizontal Mouse View Update
         context.scene.graph[context.handle]
             .local_transform_mut()
             .set_rotation(UnitQuaternion::from_axis_angle(
                 &Vector3::y_axis(),
-                camera_yaw.to_radians() / 3.,
+                camera_yaw_radians / 3.,
             ));
+        // Getting the mouse direction
+        let mouse_direction_yaw: &str;
+        if camera_yaw_radians > self.old_camera_yaw {
+            mouse_direction_yaw = "left";
+        } else if camera_yaw_radians < self.old_camera_yaw {
+            mouse_direction_yaw = "right";
+        } else {
+            mouse_direction_yaw = "none";
+        }
         //Movement Player Update
         // Borrow rigid body node.
         let body = context.scene.graph[context.handle].as_rigid_body_mut();
@@ -276,13 +342,34 @@ impl PlayerMoviment {
             velocity -= body.look_vector() * 2.;
             dessacelerate = true;
         }
-        if self.position_x && !is_on_slide {
+        if self.position_x {
             // If we moving left then add "side" vector of the body.
-            velocity += body.side_vector() * 2.;
+            if self.straffing && is_on_slide {
+                velocity += body.side_vector() * 1.03;
+            }
+            // Reduce moviment if is straffing
+            else if self.straffing {
+                velocity += body.side_vector() * 1.1;
+            }
+            // Normal moviment
+            else {
+                velocity += body.side_vector() * 2.0;
+            }
         }
-        if self.position_x_negative && !is_on_slide {
+        if self.position_x_negative {
             // If we moving right then subtract "side" vector of the body.
-            velocity -= body.side_vector() * 2.;
+            // Reduce moviment if is on slide and straffing
+            if self.straffing && is_on_slide {
+                velocity -= body.side_vector() * 1.03;
+            }
+            // Reduce moviment if is straffing
+            else if self.straffing {
+                velocity -= body.side_vector() * 1.1;
+            }
+            // Normal moviment
+            else {
+                velocity -= body.side_vector() * 2.0;
+            }
         }
         // Jump System
         if self.jump && !is_on_slide && !is_on_air && self.ticks_jump_cooldown <= 3 {
@@ -299,33 +386,79 @@ impl PlayerMoviment {
         } else if self.ticks_jump_cooldown > 20 {
             self.ticks_jump_cooldown = -1;
         }
-        // Calculation the acceleration by mouse movement
-        if self.old_camera_yaw != camera_yaw.to_radians() {
+        // Calculation the horizontal acceleration by mouse movement
+        if self.old_camera_yaw != camera_yaw_radians {
             //Calculates the mouse velocity
-            let mut mouse_position_yaw: f32 = 0.;
+            let mouse_position_yaw: f32;
+            let old_mouse_position_yaw: f32;
             //Negative to Positive
-            if camera_yaw.to_radians() < 0. {
-                mouse_position_yaw = camera_yaw.to_radians().abs();
+            if camera_yaw_radians < 0. {
+                mouse_position_yaw = camera_yaw_radians.abs();
+                old_mouse_position_yaw = self.old_camera_yaw.abs();
             } else {
-                mouse_position_yaw = camera_yaw.to_radians();
+                mouse_position_yaw = camera_yaw_radians;
+                old_mouse_position_yaw = self.old_camera_yaw
             }
             //Difference between
-            if mouse_position_yaw != self.old_camera_yaw {
-                if mouse_position_yaw < self.old_camera_yaw {
-                    mouse_accelerate_yaw = self.old_camera_yaw - mouse_position_yaw;
+            if mouse_position_yaw != old_mouse_position_yaw {
+                if mouse_position_yaw < old_mouse_position_yaw {
+                    mouse_accelerate_yaw = old_mouse_position_yaw - mouse_position_yaw;
                 } else {
-                    mouse_accelerate_yaw = mouse_position_yaw - self.old_camera_yaw;
+                    mouse_accelerate_yaw = mouse_position_yaw - old_mouse_position_yaw;
                 }
             }
-            self.old_camera_yaw = mouse_position_yaw
+            self.old_camera_yaw = camera_yaw_radians;
         }
-        // Calculation the acceleration by slider moviment
-        if self.old_camera_pitch != camera_pitch.to_radians() {
-            let mut mouse_position_pitch: f32 = 0.;
-            mouse_position_pitch = camera_pitch.to_radians();
-            Log::info(mouse_position_pitch.to_string());
-
-            self.old_camera_pitch = mouse_position_pitch;
+        // Calculation the vertical acceleration by mouse moviment
+        if is_on_slide {
+            // Gaining Acceleration
+            if camera_pitch >= 0.0 {
+                if camera_pitch > 80. {
+                    mouse_accelerate_pitch = 0.3;
+                } else if camera_pitch > 70. {
+                    mouse_accelerate_pitch = 0.25;
+                } else if camera_pitch > 60. {
+                    mouse_accelerate_pitch = 0.20;
+                } else if camera_pitch > 50. {
+                    mouse_accelerate_pitch = 0.15;
+                } else if camera_pitch > 40. {
+                    mouse_accelerate_pitch = 0.10;
+                } else if camera_pitch > 30. {
+                    mouse_accelerate_pitch = 0.05;
+                } else if camera_pitch > 20. {
+                    mouse_accelerate_pitch = 0.04;
+                } else if camera_pitch > 10. {
+                    mouse_accelerate_pitch = 0.03;
+                } else if camera_pitch > 1.0 {
+                    mouse_accelerate_pitch = 0.02;
+                } else {
+                    mouse_accelerate_pitch = 0.0;
+                }
+            }
+            // Loosing Acceleration
+            else {
+                if camera_pitch < -80. {
+                    mouse_accelerate_pitch = -0.3;
+                } else if camera_pitch < -70. {
+                    mouse_accelerate_pitch = -0.25;
+                } else if camera_pitch < -60. {
+                    mouse_accelerate_pitch = -0.20;
+                } else if camera_pitch < -50. {
+                    mouse_accelerate_pitch = -0.15;
+                } else if camera_pitch < -40. {
+                    mouse_accelerate_pitch = -0.10;
+                } else if camera_pitch < -30. {
+                    mouse_accelerate_pitch = -0.05;
+                } else if camera_pitch < -20. {
+                    mouse_accelerate_pitch = -0.04;
+                } else if camera_pitch < -10. {
+                    mouse_accelerate_pitch = -0.03;
+                } else if camera_pitch < -1.0 {
+                    mouse_accelerate_pitch = -0.02;
+                } else {
+                    mouse_accelerate_pitch = 0.0;
+                }
+            }
         }
         // Change the velocity of the player
         body.set_lin_vel(self.velocity(
@@ -335,11 +468,9 @@ impl PlayerMoviment {
             is_frontal_collide,
             dessacelerate,
             mouse_accelerate_yaw,
+            mouse_accelerate_pitch,
+            mouse_direction_yaw,
         ));
-        //Reset Tick Cooldown
-        if self.ticks_reset_cooldown <= 30 {
-            self.ticks_reset_cooldown += 1;
-        }
     }
 
     /// Detects if player has reached in the end of the map
@@ -406,5 +537,10 @@ impl ScriptTrait for PlayerMoviment {
         self.calculate_acceleration(context);
         // Detects if the player has reached the end
         self.verify_finish(self.foot_collider_node, context);
+
+        //Reset Tick Cooldown
+        if self.ticks_reset_cooldown <= 30 {
+            self.ticks_reset_cooldown += 1;
+        }
     }
 }

@@ -11,13 +11,10 @@ use bn_scripts::{
 };
 //Engine Dependencies
 use fyrox::{
-    core::{log::Log, pool::Handle},
+    core::pool::Handle,
     event::Event,
     gui::{
-        font::Font,
-        message::{MessageData, UiMessage},
-        text::TextBuilder,
-        widget::{WidgetBuilder, WidgetMessage},
+        font::Font, message::UiMessage, text::TextBuilder, widget::WidgetBuilder,
         HorizontalAlignment, UiNode, VerticalAlignment,
     },
     plugin::{Plugin, PluginConstructor, PluginContext, PluginRegistrationContext},
@@ -93,8 +90,7 @@ impl Plugin for Game {
         // Do something on OS event here.
     }
 
-    fn on_ui_message(&mut self, _context: &mut PluginContext, _message: &UiMessage) {
-    }
+    fn on_ui_message(&mut self, _context: &mut PluginContext, _message: &UiMessage) {}
 
     fn on_scene_begin_loading(&mut self, _path: &Path, context: &mut PluginContext) {
         if self.scene.is_some() {
