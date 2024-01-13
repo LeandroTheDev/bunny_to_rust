@@ -95,7 +95,7 @@ impl PlayerMoviment {
                                     // Reseting player position
                                     let player: &mut Transform =
                                         context.scene.graph[context.handle].local_transform_mut();
-                                    player.set_position(Vector3::new(0.082, 3.15, 8.897));
+                                    player.set_position(Vector3::new(-0.008, 3.204, 8.868));
                                     // Send a message to reset the pitch view and yaw variable
                                     context.message_sender.send_global("reset_camera");
                                     // Reseting the Yaw
@@ -306,6 +306,7 @@ impl PlayerMoviment {
                 is_frontal_collide = false;
             }
         }
+        // Handles the yaw view for the camera, more info in process_camera_moviment_yaw in camera script
         context.scene.graph[context.handle]
             .local_transform_mut()
             .set_rotation(UnitQuaternion::from_axis_angle(

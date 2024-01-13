@@ -316,61 +316,13 @@
     scene_settings: {
         "data/scenes/scenario.rgs": (
             camera_settings: (
-                position: (0.66358995, 3.3347216, 8.201185),
-                yaw: 17.46018,
-                pitch: 0.44999915,
+                position: (0.5179571, 2.84869, 9.500231),
+                yaw: 15.580137,
+                pitch: 0.3899992,
             ),
             node_infos: {
                 (
-                    index: 19,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 13,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 25,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 0,
-                    generation: 1,
-                ): (
-                    is_expanded: true,
-                ),
-                (
-                    index: 42,
-                    generation: 1,
-                ): (
-                    is_expanded: true,
-                ),
-                (
-                    index: 16,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 40,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 5,
-                    generation: 1,
-                ): (
-                    is_expanded: true,
-                ),
-                (
-                    index: 15,
+                    index: 1,
                     generation: 1,
                 ): (
                     is_expanded: true,
@@ -382,7 +334,7 @@
                     is_expanded: false,
                 ),
                 (
-                    index: 6,
+                    index: 5,
                     generation: 1,
                 ): (
                     is_expanded: true,
@@ -394,25 +346,13 @@
                     is_expanded: false,
                 ),
                 (
-                    index: 2,
+                    index: 15,
                     generation: 1,
                 ): (
                     is_expanded: true,
                 ),
                 (
-                    index: 1,
-                    generation: 1,
-                ): (
-                    is_expanded: true,
-                ),
-                (
-                    index: 37,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 44,
+                    index: 0,
                     generation: 1,
                 ): (
                     is_expanded: true,
@@ -424,25 +364,13 @@
                     is_expanded: true,
                 ),
                 (
-                    index: 10,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 7,
-                    generation: 1,
-                ): (
-                    is_expanded: false,
-                ),
-                (
-                    index: 45,
+                    index: 2,
                     generation: 1,
                 ): (
                     is_expanded: true,
                 ),
                 (
-                    index: 43,
+                    index: 40,
                     generation: 1,
                 ): (
                     is_expanded: false,
@@ -460,7 +388,79 @@
                     is_expanded: true,
                 ),
                 (
+                    index: 16,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 19,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 43,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 6,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
+                    index: 42,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
+                    index: 25,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 37,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 45,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
                     index: 34,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 13,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 7,
+                    generation: 1,
+                ): (
+                    is_expanded: false,
+                ),
+                (
+                    index: 44,
+                    generation: 1,
+                ): (
+                    is_expanded: true,
+                ),
+                (
+                    index: 10,
                     generation: 1,
                 ): (
                     is_expanded: false,
@@ -475,7 +475,7 @@
     ),
     windows: (
         window_position: (251.0, 280.0),
-        window_size: (1920.0, 1008.0),
+        window_size: (1920.0, 1052.0),
         layout: None,
     ),
 )

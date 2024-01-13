@@ -739,14 +739,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "executor-android"
-version = "0.1.0"
-dependencies = [
- "bunny_to_rust",
- "fyrox",
-]
-
-[[package]]
 name = "executor-wasm"
 version = "0.1.0"
 dependencies = [

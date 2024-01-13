@@ -1,6 +1,6 @@
 
 [workspace]
-members = ["editor", "executor", "executor-wasm", "executor-android", "game"]
+members = ["editor", "executor", "executor-wasm", "game"]
 resolver = "2"
 
 [workspace.dependencies.fyrox]
