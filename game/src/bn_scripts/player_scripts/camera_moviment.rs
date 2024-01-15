@@ -8,10 +8,15 @@ use fyrox::{
         visitor::prelude::*,
         TypeUuidProvider,
     },
-    event::{DeviceEvent, Event},
+    engine::GraphicsContext,
+    event::{DeviceEvent, ElementState, Event, WindowEvent},
+    keyboard::{KeyCode, PhysicalKey},
     scene::node::Node,
     script::{ScriptContext, ScriptMessageContext, ScriptMessagePayload, ScriptTrait},
+    window::CursorGrabMode,
 };
+
+use crate::bn_scripts::GAME_PAUSED;
 
 #[derive(Visit, Reflect, Default, Debug, Clone)]
 pub struct CameraMoviment {
@@ -64,6 +69,53 @@ impl CameraMoviment {
                 self.pitch.to_radians(),
             ));
     }
+
+    // Detect Pause button
+    fn process_pause_button(&mut self, event: &Event<()>, context: &mut ScriptContext) {
+        match event {
+            Event::WindowEvent { event, .. } => {
+                if let WindowEvent::KeyboardInput { event, .. } = event {
+                    let pressed = event.state == ElementState::Pressed;
+                    if let PhysicalKey::Code(code) = event.physical_key {
+                        match code {
+                            KeyCode::Escape => {
+                                // Check if is pressed
+                                if pressed {
+                                    // Change game paused
+                                    unsafe {
+                                        GAME_PAUSED = !GAME_PAUSED;
+                                    }
+                                    // Check if graphics context is initialized
+                                    if let GraphicsContext::Initialized(ref graphics_context) =
+                                        context.graphics_context
+                                    {
+                                        // Block cursor
+                                        if unsafe { GAME_PAUSED } {
+                                            let window = &graphics_context.window;
+                                            // Disable cursor visibility
+                                            window.set_cursor_visible(false);
+                                            // Prevent the cursor to be moved outside of the window.
+                                            let _ = window.set_cursor_grab(CursorGrabMode::Confined);
+                                        }
+                                        // Unblock cursor
+                                        else {
+                                            let window = &graphics_context.window;
+                                            // Disable cursor visibility
+                                            window.set_cursor_visible(true);
+                                            // Prevent the cursor to be moved outside of the window.
+                                            let _ = window.set_cursor_grab(CursorGrabMode::None);
+                                        }
+                                    }
+                                }
+                            }
+                            _ => (),
+                        }
+                    }
+                }
+            }
+            _ => (),
+        }
+    }
 }
 
 impl_component_provider!(CameraMoviment);
@@ -83,6 +135,15 @@ impl ScriptTrait for CameraMoviment {
     }
 
     fn on_os_event(&mut self, event: &Event<()>, context: &mut ScriptContext) {
+        // game paused = only check the pause button
+        if unsafe { GAME_PAUSED } {
+            // Process Pause button
+            self.process_pause_button(event, context);
+            return;
+        } else {
+            // Process Pause button
+            self.process_pause_button(event, context);
+        }
         // Enable mouse detection
         // Process Vertical View
         self.process_camera_moviment_pitch(event, &mut context.scene.graph[context.handle]);

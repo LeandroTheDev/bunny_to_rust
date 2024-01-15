@@ -8,17 +8,20 @@ use bn_scripts::{
         frontal_collider::FrontalCollider, player_hand::PlayerHand,
         player_moviment::PlayerMoviment,
     },
+    GAME_PAUSED,
 };
 //Engine Dependencies
 use fyrox::{
-    core::pool::Handle,
-    event::Event,
+    core::{pool::Handle, log::Log},
+    engine::GraphicsContext,
+    event::{DeviceEvent, Event, WindowEvent},
     gui::{
         font::Font, message::UiMessage, text::TextBuilder, widget::WidgetBuilder,
         HorizontalAlignment, UiNode, VerticalAlignment,
     },
     plugin::{Plugin, PluginConstructor, PluginContext, PluginRegistrationContext},
     scene::Scene,
+    window::CursorGrabMode,
 };
 use std::path::Path;
 
@@ -86,8 +89,39 @@ impl Plugin for Game {
         // Add your global update code here.
     }
 
-    fn on_os_event(&mut self, _event: &Event<()>, _context: PluginContext) {
-        // Do something on OS event here.
+    fn on_os_event(&mut self, event: &Event<()>, context: PluginContext) {
+        match event {
+            // This branch should be used for pre-processed events that comes from
+            // the main window.
+            Event::WindowEvent { event, .. } => match event {
+                WindowEvent::Focused(_) => {
+                    // Check if game is paused
+                    if !unsafe { GAME_PAUSED } {
+                        // Check if graphics context is initialized
+                        if let GraphicsContext::Initialized(ref graphics_context) =
+                            context.graphics_context
+                        {
+                            let window = &graphics_context.window;
+                            // Disable cursor visibility
+                            window.set_cursor_visible(false);
+                            // Prevent the cursor to be moved outside of the window.
+                            let _ = window.set_cursor_grab(CursorGrabMode::Confined);
+                        }
+                    }
+                }
+                _ => (),
+            },
+            Event::DeviceEvent { event, .. } => match event {
+                DeviceEvent::Added => {}
+                DeviceEvent::Removed => {}
+                DeviceEvent::MouseMotion { .. } => {}
+                DeviceEvent::MouseWheel { .. } => {}
+                DeviceEvent::Motion { .. } => {}
+                DeviceEvent::Button { .. } => {}
+                DeviceEvent::Key(_) => {}
+            },
+            _ => (),
+        }
     }
 
     fn on_ui_message(&mut self, _context: &mut PluginContext, _message: &UiMessage) {}
