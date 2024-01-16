@@ -11,7 +11,7 @@ use fyrox::{
     script::{ScriptContext, ScriptTrait},
 };
 
-use crate::{bn_scripts::GAME_PAUSED, Game};
+use crate::Game;
 
 #[derive(Visit, Reflect, Default, Debug, Clone)]
 pub struct Timer {

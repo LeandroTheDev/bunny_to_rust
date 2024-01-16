@@ -37,15 +37,19 @@ How to play?
 - Sliders can increase acceleration
 - The timer will start after the first jump
 
+### You can view the updates and gameplay in [UPDATES](https://github.com/LeandroTheDev/bunny_to_rust/blob/main/UPDATES.md) file
+
+### Want to create your own map? see the [Creating a Custom Map](https://github.com/LeandroTheDev/bunny_to_rust/wiki/Creating-a-Custom-Map)
+
 How to compile the project?
-- Download Rust
-- Open terminal
+- Download [rust](https://www.rust-lang.org/)
+- Open terminal for linux / cmd/powershell for windows
 - cargo install fyrox-template
 - fyrox-template init --name bunny_to_rust --style 3d
 - > Obs: project template always get from latest version and this project can be outdated for template, if this happens download in releases the executors for this version
 - place all files to this new folder and overwrite if needed
 - cargo run --package executor --release
-> This will compile the project, will take a long time..., if you just testing just download the lastest [release](https://github.com/LeandroTheDev/rust_project/releases)
+- > This will compile the project, will take a long time..., if you just testing just download the lastest [release](https://github.com/LeandroTheDev/rust_project/releases)
 
 Can i modify this and reupload?
 - yes.

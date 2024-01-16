@@ -39,6 +39,7 @@ pub struct PlayerMoviment {
     ticks_jump_cooldown: i32,
     ticks_reset_cooldown: i32,
     acceleration: f32,
+    down_speed: f32,
     straffing: bool,
     old_camera_yaw: f32,
 }
@@ -263,7 +264,8 @@ impl PlayerMoviment {
             }
         }
         let is_on_air: bool;
-        let is_on_slide: bool;
+        let is_on_slider: bool;
+        let wall_slider_direction: String;
         let is_frontal_collide: bool;
         let camera_yaw: f32;
         let camera_pitch: f32;
@@ -289,10 +291,14 @@ impl PlayerMoviment {
                 .try_get_script_of::<FootCollider>(self.foot_collider_node)
             {
                 is_on_air = foot_collider_node_script_ref.is_on_air;
-                is_on_slide = foot_collider_node_script_ref.is_on_slider;
+                is_on_slider = foot_collider_node_script_ref.is_on_slider;
+                wall_slider_direction = foot_collider_node_script_ref
+                    .wall_slider_direction
+                    .to_string();
             } else {
                 is_on_air = false;
-                is_on_slide = false;
+                is_on_slider = false;
+                wall_slider_direction = String::from("none");
             }
 
             // Receiving the frontal collider
@@ -331,7 +337,6 @@ impl PlayerMoviment {
         let mut dessacelerate: bool = false;
         let mut mouse_accelerate_yaw: f32 = 0.;
         let mut mouse_accelerate_pitch: f32 = 0.;
-
         // Change the velocity depending on the keys pressed.
         if self.position_z || self.straffing {
             // If we moving forward then add "look" vector of the body.
@@ -345,8 +350,8 @@ impl PlayerMoviment {
         }
         if self.position_x {
             // If we moving left then add "side" vector of the body.
-            if self.straffing && is_on_slide {
-                velocity += body.side_vector() * 1.03;
+            if self.straffing && is_on_slider {
+                velocity += body.side_vector() * 1.00005;
             }
             // Reduce moviment if is straffing
             else if self.straffing {
@@ -360,8 +365,8 @@ impl PlayerMoviment {
         if self.position_x_negative {
             // If we moving right then subtract "side" vector of the body.
             // Reduce moviment if is on slide and straffing
-            if self.straffing && is_on_slide {
-                velocity -= body.side_vector() * 1.03;
+            if self.straffing && is_on_slider {
+                velocity -= body.side_vector() * 1.00005;
             }
             // Reduce moviment if is straffing
             else if self.straffing {
@@ -373,7 +378,7 @@ impl PlayerMoviment {
             }
         }
         // Jump System
-        if self.jump && !is_on_slide && !is_on_air && self.ticks_jump_cooldown <= 3 {
+        if self.jump && !is_on_slider && !is_on_air && self.ticks_jump_cooldown <= 3 {
             //Check if is the first tick
             if self.ticks_jump_cooldown == -1 {
                 self.ticks_jump_cooldown = 0;
@@ -411,61 +416,91 @@ impl PlayerMoviment {
             self.old_camera_yaw = camera_yaw_radians;
         }
         // Calculation the vertical acceleration by mouse moviment
-        if is_on_slide {
+        if is_on_slider {
             // Gaining Acceleration
             if camera_pitch >= 0.0 {
                 if camera_pitch > 80. {
-                    mouse_accelerate_pitch = 0.3;
-                } else if camera_pitch > 70. {
-                    mouse_accelerate_pitch = 0.25;
-                } else if camera_pitch > 60. {
-                    mouse_accelerate_pitch = 0.20;
-                } else if camera_pitch > 50. {
+                    self.down_speed += 0.05;
                     mouse_accelerate_pitch = 0.15;
-                } else if camera_pitch > 40. {
+                } else if camera_pitch > 70.0 {
+                    self.down_speed += 0.04;
                     mouse_accelerate_pitch = 0.10;
-                } else if camera_pitch > 30. {
+                } else if camera_pitch > 60.0 {
+                    self.down_speed += 0.03;
                     mouse_accelerate_pitch = 0.05;
-                } else if camera_pitch > 20. {
+                } else if camera_pitch > 50.0 {
+                    self.down_speed += 0.02;
                     mouse_accelerate_pitch = 0.04;
-                } else if camera_pitch > 10. {
+                } else if camera_pitch > 40.0 {
+                    self.down_speed += 0.01;
                     mouse_accelerate_pitch = 0.03;
-                } else if camera_pitch > 1.0 {
+                } else if camera_pitch > 30.0 {
+                    self.down_speed += 0.009;
                     mouse_accelerate_pitch = 0.02;
+                } else if camera_pitch > 20.0 {
+                    self.down_speed += 0.008;
+                    mouse_accelerate_pitch = 0.015;
+                } else if camera_pitch > 10.0 {
+                    self.down_speed += 0.007;
+                    mouse_accelerate_pitch = 0.010;
+                } else if camera_pitch > 1.0 {
+                    self.down_speed += 0.006;
+                    mouse_accelerate_pitch = 0.005;
+                } else {
+                    mouse_accelerate_pitch = 0.0;
+                }
+                // Downing the player
+                velocity -= body.up_vector() * self.down_speed;
+            }
+            // Loosing Acceleration
+            else {
+                // Reset down speed
+                self.down_speed = 0.0;
+                if camera_pitch < -80. {
+                    mouse_accelerate_pitch = -0.15;
+                } else if camera_pitch < -70. {
+                    mouse_accelerate_pitch = -0.10;
+                } else if camera_pitch < -60. {
+                    mouse_accelerate_pitch = -0.05;
+                } else if camera_pitch < -50. {
+                    mouse_accelerate_pitch = -0.04;
+                } else if camera_pitch < -40. {
+                    mouse_accelerate_pitch = -0.03;
+                } else if camera_pitch < -30. {
+                    mouse_accelerate_pitch = -0.02;
+                } else if camera_pitch < -20. {
+                    mouse_accelerate_pitch = -0.015;
+                } else if camera_pitch < -10. {
+                    mouse_accelerate_pitch = -0.010;
+                } else if camera_pitch < -1.0 {
+                    mouse_accelerate_pitch = -0.005;
                 } else {
                     mouse_accelerate_pitch = 0.0;
                 }
             }
-            // Loosing Acceleration
-            else {
-                if camera_pitch < -80. {
-                    mouse_accelerate_pitch = -0.3;
-                } else if camera_pitch < -70. {
-                    mouse_accelerate_pitch = -0.25;
-                } else if camera_pitch < -60. {
-                    mouse_accelerate_pitch = -0.20;
-                } else if camera_pitch < -50. {
-                    mouse_accelerate_pitch = -0.15;
-                } else if camera_pitch < -40. {
-                    mouse_accelerate_pitch = -0.10;
-                } else if camera_pitch < -30. {
-                    mouse_accelerate_pitch = -0.05;
-                } else if camera_pitch < -20. {
-                    mouse_accelerate_pitch = -0.04;
-                } else if camera_pitch < -10. {
-                    mouse_accelerate_pitch = -0.03;
-                } else if camera_pitch < -1.0 {
-                    mouse_accelerate_pitch = -0.02;
-                } else {
-                    mouse_accelerate_pitch = 0.0;
-                }
+        } else {
+            self.down_speed = 0.0;
+        }
+        // Wall Slider Jump
+        {
+            let direction: &str = &wall_slider_direction;
+            match direction {
+                "left" => velocity += body.side_vector() * 2.0,
+                "right" => velocity -= body.side_vector() * 2.0,
+                "front" => velocity += body.look_vector() * 2.0,
+                "back" => velocity -= body.look_vector() * 2.0,
+                "none" => {}
+                _ => {}
+            }
+            if direction != "none" {
+                velocity += body.up_vector() * 3.0;
             }
         }
         // Change the velocity of the player
         body.set_lin_vel(self.velocity(
             velocity,
             is_on_air,
-            is_on_slide,
+            is_on_slider,
             is_frontal_collide,
             dessacelerate,
             mouse_accelerate_yaw,

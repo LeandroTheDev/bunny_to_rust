@@ -6,7 +6,7 @@ use fyrox::{
         reflect::prelude::*,
         uuid::{uuid, Uuid},
         visitor::prelude::*,
-        TypeUuidProvider,
+        TypeUuidProvider, log::Log,
     },
     engine::GraphicsContext,
     event::{DeviceEvent, ElementState, Event, WindowEvent},
@@ -90,12 +90,13 @@ impl CameraMoviment {
                                         context.graphics_context
                                     {
                                         // Block cursor
-                                        if unsafe { GAME_PAUSED } {
+                                        if unsafe { !GAME_PAUSED } {
                                             let window = &graphics_context.window;
                                             // Disable cursor visibility
                                             window.set_cursor_visible(false);
                                             // Prevent the cursor to be moved outside of the window.
                                             let _ = window.set_cursor_grab(CursorGrabMode::Confined);
+                                            Log::info("The game is Paused");
                                         }
                                         // Unblock cursor
                                         else {
@@ -104,6 +105,7 @@ impl CameraMoviment {
                                             window.set_cursor_visible(true);
                                             // Prevent the cursor to be moved outside of the window.
                                             let _ = window.set_cursor_grab(CursorGrabMode::None);
+                                            Log::info("The game Resumed");
                                         }
                                     }
                                 }

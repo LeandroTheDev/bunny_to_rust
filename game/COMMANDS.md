@@ -1,3 +1,5 @@
+# Commands
+
 ### New project
 - cargo install fyrox-template
 - > First time only
@@ -12,3 +14,10 @@
 - fyrox-template upgrade --version=nightly
 ### Update engine
 - cargo update
+
+
+# Executors Utils
+### Change update framerate
+- executor/src/main.rs
+### Add
+```executor.set_desired_update_rate(120.0);```

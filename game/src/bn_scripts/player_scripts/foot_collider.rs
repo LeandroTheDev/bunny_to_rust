@@ -15,8 +15,10 @@ use fyrox::{
 pub struct FootCollider {
     pub is_on_air: bool,
     pub is_on_slider: bool,
+    pub wall_slider_direction: String,
 }
 impl FootCollider {
+    /// Returns a boolean if player is colliding the gorund
     pub fn has_ground_contact(&mut self, handle: Handle<Node>, graph: &Graph) -> bool {
         if let Some(collider) = graph.try_get(handle).and_then(|n| n.cast::<Collider>()) {
             for contact in collider.contacts(&graph.physics) {
@@ -29,6 +31,7 @@ impl FootCollider {
         }
         false
     }
+    /// Returns a boolean if player is colliding a slider
     pub fn has_slider_contact(&mut self, handle: Handle<Node>, graph: &Graph) -> bool {
         if let Some(collider) = graph.try_get(handle).and_then(|n| n.cast::<Collider>()) {
             for contact in collider.contacts(&graph.physics) {
@@ -45,22 +48,31 @@ impl FootCollider {
                             }
                         }
                     }
-                    // // This is the player collision so doesnt need it
-                    // if let Some(actual_collider) = graph
-                    //     .try_get(manifold.rigid_body1)
-                    //     .and_then(|n| n.cast::<RigidBody>())
-                    // {
-                    //     if actual_collider.tag() == "Slider" {
-                    //         if manifold.local_n1.y.abs() > 0.7 || manifold.local_n2.y.abs() > 0.7 {
-                    //             return true;
-                    //         }
-                    //     }
-                    // }
-                    return false;
                 }
             }
         }
         return false;
+    }
+    /// Returns a string with the opposite direction of the wall
+    pub fn has_wall_slider_contact(&mut self, handle: Handle<Node>, graph: &Graph) -> &str {
+        if let Some(collider) = graph.try_get(handle).and_then(|n| n.cast::<Collider>()) {
+            for contact in collider.intersects(&graph.physics) {
+                // Wall RigidBody
+                if let Some(actual_collider) = graph
+                    .try_get(contact.collider1)
+                    .and_then(|n| n.cast::<RigidBody>())
+                {
+                    match actual_collider.tag() {
+                        "Wall Slider +X" => "left",
+                        "Wall Slider -X" => "right",
+                        "Wall Slider +Z" => "front",
+                        "Wall Slider -Z" => "back",
+                        _ => "none",
+                    };
+                }
+            }
+        }
+        return "none";
     }
 }
 impl_component_provider!(FootCollider);
@@ -72,14 +84,10 @@ impl TypeUuidProvider for FootCollider {
 }
 
 impl ScriptTrait for FootCollider {
-    fn on_init(&mut self, _context: &mut ScriptContext) {
-        // Declaring variables
-        self.is_on_air = false;
-    }
-
     fn on_update(&mut self, context: &mut ScriptContext) {
-        // Updating the variable
+        // Updating the variables
         self.is_on_air = !self.has_ground_contact(context.handle, &context.scene.graph);
         self.is_on_slider = self.has_slider_contact(context.handle, &context.scene.graph);
+        self.wall_slider_direction = String::from(self.has_wall_slider_contact(context.handle, &context.scene.graph));
     }
 }

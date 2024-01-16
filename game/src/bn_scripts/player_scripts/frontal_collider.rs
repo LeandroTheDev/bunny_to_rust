@@ -36,9 +36,6 @@ impl FrontalCollider {
         }
         false
     }
-    pub fn is_frontal_collided(&mut self) -> bool {
-        return self.is_frontal_collide;
-    }
 }
 
 impl ScriptTrait for FrontalCollider {

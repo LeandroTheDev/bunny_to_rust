@@ -12,7 +12,7 @@ use bn_scripts::{
 };
 //Engine Dependencies
 use fyrox::{
-    core::{pool::Handle, log::Log},
+    core::pool::Handle,
     engine::GraphicsContext,
     event::{DeviceEvent, Event, WindowEvent},
     gui::{
@@ -91,12 +91,11 @@ impl Plugin for Game {
 
     fn on_os_event(&mut self, event: &Event<()>, context: PluginContext) {
         match event {
-            // This branch should be used for pre-processed events that comes from
-            // the main window.
+            // Process Window Event
             Event::WindowEvent { event, .. } => match event {
-                WindowEvent::Focused(_) => {
-                    // Check if game is paused
-                    if !unsafe { GAME_PAUSED } {
+                WindowEvent::Focused(is_focused) => {
+                    // Check if is focused
+                    if *is_focused && unsafe { !GAME_PAUSED } {
                         // Check if graphics context is initialized
                         if let GraphicsContext::Initialized(ref graphics_context) =
                             context.graphics_context
@@ -106,6 +105,17 @@ impl Plugin for Game {
                             window.set_cursor_visible(false);
                             // Prevent the cursor to be moved outside of the window.
                             let _ = window.set_cursor_grab(CursorGrabMode::Confined);
+                        }
+                    } else {
+                        // Check if graphics context is initialized
+                        if let GraphicsContext::Initialized(ref graphics_context) =
+                            context.graphics_context
+                        {
+                            let window = &graphics_context.window;
+                            // Disable cursor visibility
+                            window.set_cursor_visible(true);
+                            // Prevent the cursor to be moved outside of the window.
+                            let _ = window.set_cursor_grab(CursorGrabMode::None);
                         }
                     }
                 }
